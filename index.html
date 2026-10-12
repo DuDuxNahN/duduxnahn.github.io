@@ -22,11 +22,10 @@
       position: relative;
     }
 
-    /* Container hiệu ứng chính */
     .scene-container {
       text-align: center;
       z-index: 10;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.9);
       padding: 30px;
       border-radius: 24px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
@@ -42,16 +41,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      background: #fff5eb;
+      border-radius: 16px;
+      border: 2px dashed #f4a261;
     }
 
     .gif-box img {
       max-width: 100%;
       max-height: 100%;
-      border-radius: 16px;
+      border-radius: 12px;
       object-fit: contain;
     }
 
-    /* Nút bấm chính */
     .btn-action {
       background-color: #e76f51;
       color: white;
@@ -63,13 +64,13 @@
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(231, 111, 81, 0.4);
       transition: all 0.2s ease;
+      width: 100%;
     }
 
     .btn-action:active {
       transform: scale(0.95);
     }
 
-    /* Ô nhập lời nhắn (Khóa ban đầu) */
     .message-form {
       display: none;
       flex-direction: column;
@@ -85,9 +86,9 @@
       outline: none;
       font-size: 1rem;
       text-align: center;
+      width: 100%;
     }
 
-    /* Tin nhắn bay lơ lửng */
     .floating-note {
       position: absolute;
       background: #ffffff;
@@ -122,13 +123,13 @@
 
   <div class="scene-container">
     <div class="gif-box">
-      <!-- GIF ban đầu: Dudu và Bubu vẫy tay -->
-      <img id="bubuGif" src="https://media.tenor.com/J332S3sHlhUAAAAC/bubu-dudu-bubu.gif" alt="Bubu Dudu">
+      <!-- Ảnh gốc Bubu Dudu chào hỏi -->
+      <img id="bubuGif" src="https://i.imgur.com/2U55j7q.gif" alt="Bubu Dudu">
     </div>
 
-    <button id="hugBtn" class="btn-action" onclick="startHug()">Ấn để Dudu ôm Bubu 🐾</button>
+    <button id="hugBtn" class="btn-action" onclick="startHug()">Ấn để Dudu chạy tới ôm Bubu 🐾</button>
 
-    <!-- Ô gửi lời nhắn -->
+    <!-- Ô gửi lời nhắn (Ẩn đi ban đầu) -->
     <div id="messageForm" class="message-form">
       <input type="text" id="noteInput" class="message-input" placeholder="Để lại lời nhắn yêu thương..." maxlength="50">
       <button class="btn-action" style="background-color: #2a9d8f;" onclick="saveNote()">Gửi lời nhắn ✨</button>
@@ -136,23 +137,19 @@
   </div>
 
   <script>
-    // 1. Hàm kích hoạt cảnh Dudu chạy tới ôm Bubu
     function startHug() {
       const gifImg = document.getElementById('bubuGif');
       const hugBtn = document.getElementById('hugBtn');
       const messageForm = document.getElementById('messageForm');
 
-      // Đổi sang GIF Dudu chạy tới ôm Bubu ấm áp
-      gifImg.src = "https://media.tenor.com/2X88v6E1E4AAAAAC/bubu-dudu-hug.gif";
+      // Đổi sang GIF Dudu ôm nhau ấm áp
+      gifImg.src = "https://i.imgur.com/4A018v3.gif";
       
-      // Ẩn nút ôm và hiện ô nhập lời nhắn
+      // Biến mất nút bấm vĩnh viễn và hiện ô lời nhắn
       hugBtn.style.display = 'none';
-      setTimeout(() => {
-        messageForm.style.display = 'flex';
-      }, 600);
+      messageForm.style.display = 'flex';
     }
 
-    // 2. Hàm lưu lời nhắn và tạo hiệu ứng bay
     function saveNote() {
       const input = document.getElementById('noteInput');
       const text = input.value.trim();
@@ -162,22 +159,19 @@
         notes.push(text);
         localStorage.setItem('bubu_notes', JSON.stringify(notes));
 
-        // Tạo phần tử tin nhắn bay ngay lập tức
         createFloatingNote(text);
         input.value = '';
       }
     }
 
-    // 3. Hàm tạo một tin nhắn bay lơ lửng ngẫu nhiên trên màn hình
     function createFloatingNote(text) {
       const note = document.createElement('div');
       note.className = 'floating-note';
       note.innerText = '💌 ' + text;
 
-      // Vị trí ngẫu nhiên trên màn hình
       const randomTop = Math.floor(Math.random() * (window.innerHeight - 100)) + 20;
       const randomLeft = Math.floor(Math.random() * (window.innerWidth - 150)) + 20;
-      const randomDuration = Math.floor(Math.random() * 6) + 8; // Từ 8s - 14s
+      const randomDuration = Math.floor(Math.random() * 6) + 8;
 
       note.style.top = randomTop + 'px';
       note.style.left = randomLeft + 'px';
@@ -186,7 +180,6 @@
       document.body.appendChild(note);
     }
 
-    // 4. Khi tải/vào lại trang: Hiển thị lại tất cả lời nhắn cũ bay trên màn hình
     window.onload = function() {
       let notes = JSON.parse(localStorage.getItem('bubu_notes')) || [];
       notes.forEach(text => {
