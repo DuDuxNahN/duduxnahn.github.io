@@ -86,7 +86,7 @@
       width: 100%;
     }
 
-    /* Các kiểu khung chữ ngẫu nhiên đa dạng màu sắc */
+    /* Khung lời nhắn di chuyển và nảy quanh màn hình */
     .floating-note {
       position: absolute;
       padding: 10px 18px;
@@ -97,10 +97,9 @@
       pointer-events: none;
       white-space: nowrap;
       z-index: 10;
-      animation: floatAround 12s infinite ease-in-out alternate;
     }
 
-    /* Bộ sưu tập màu sắc sinh động */
+    /* 6 kiểu khung chữ với màu sắc khác nhau */
     .style-1 { background: #fff0f3; color: #ff4d6d; border: 2px solid #ff758c; }
     .style-2 { background: #e8f4f8; color: #1d3557; border: 2px solid #457b9d; }
     .style-3 { background: #fefae0; color: #bc6c25; border: 2px solid #dda15e; }
@@ -111,14 +110,6 @@
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
-    }
-
-    @keyframes floatAround {
-      0% { transform: translate(0, 0) rotate(-5deg); }
-      25% { transform: translate(60px, -80px) rotate(5deg); }
-      50% { transform: translate(-50px, 100px) rotate(-3deg); }
-      75% { transform: translate(80px, 50px) rotate(4deg); }
-      100% { transform: translate(-70px, -60px) rotate(-5deg); }
     }
   </style>
 
@@ -179,23 +170,53 @@
       }
     }
 
-    function createFloatingNote(text) {
+    // Hàm tạo và điều khiển hiệu ứng nảy quanh màn hình
+    function createBouncingNote(text) {
       const note = document.createElement('div');
       
-      // Chọn ngẫu nhiên một kiểu màu sắc khung chữ từ style-1 đến style-6
+      // Chọn ngẫu nhiên kiểu màu sắc từ style-1 đến style-6
       const randomStyleNum = Math.floor(Math.random() * 6) + 1;
       note.className = `floating-note style-${randomStyleNum}`;
       note.innerText = '💌 ' + text;
-
-      const randomTop = Math.floor(Math.random() * (window.innerHeight - 100)) + 20;
-      const randomLeft = Math.floor(Math.random() * (window.innerWidth - 180)) + 20;
-      const randomDuration = Math.floor(Math.random() * 6) + 8;
-
-      note.style.top = randomTop + 'px';
-      note.style.left = randomLeft + 'px';
-      note.style.animationDuration = randomDuration + 's';
-
       document.body.appendChild(note);
+
+      // Vị trí xuất phát ngẫu nhiên
+      let posX = Math.random() * (window.innerWidth - 150);
+      let posY = Math.random() * (window.innerHeight - 100);
+
+      // Tốc độ và hướng di chuyển ngẫu nhiên (Vận tốc X và Y)
+      let speedX = (Math.random() - 0.5) * 3;
+      let speedY = (Math.random() - 0.5) * 3;
+      if (Math.abs(speedX) < 1) speedX = 1.5;
+      if (Math.abs(speedY) < 1) speedY = 1.5;
+
+      function updatePosition() {
+        const rect = note.getBoundingClientRect();
+        const maxX = window.innerWidth - rect.width;
+        const maxY = window.innerHeight - rect.height;
+
+        posX += speedX;
+        posY += speedY;
+
+        // Chạm cạnh trái hoặc phải thì đổi hướng (nảy lại)
+        if (posX <= 0 || posX >= maxX) {
+          speedX *= -1;
+          posX = Math.max(0, Math.min(posX, maxX));
+        }
+
+        // Chạm cạnh trên hoặc dưới thì đổi hướng (nảy lại)
+        if (posY <= 0 || posY >= maxY) {
+          speedY *= -1;
+          posY = Math.max(0, Math.min(posY, maxY));
+        }
+
+        note.style.left = posX + 'px';
+        note.style.top = posY + 'px';
+
+        requestAnimationFrame(updatePosition);
+      }
+
+      requestAnimationFrame(updatePosition);
     }
 
     // Tự động lắng nghe lời nhắn thời gian thực từ mọi người
@@ -203,7 +224,7 @@
       db.ref('notes').on('child_added', function(snapshot) {
         const data = snapshot.val();
         if (data && data.text) {
-          createFloatingNote(data.text);
+          createBouncingNote(data.text);
         }
       });
     };
