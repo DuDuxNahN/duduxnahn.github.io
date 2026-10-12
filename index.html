@@ -24,7 +24,7 @@
 
     .scene-container {
       text-align: center;
-      z-index: 10;
+      z-index: 1;
       background: rgba(255, 255, 255, 0.95);
       padding: 25px;
       border-radius: 24px;
@@ -86,21 +86,27 @@
       width: 100%;
     }
 
+    /* Các kiểu khung chữ ngẫu nhiên đa dạng màu sắc */
     .floating-note {
       position: absolute;
-      background: #ffffff;
-      color: #e76f51;
       padding: 10px 18px;
       border-radius: 20px;
       font-weight: bold;
       font-size: 0.95rem;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      border: 2px solid #f4a261;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
       pointer-events: none;
       white-space: nowrap;
-      z-index: 1;
+      z-index: 10;
       animation: floatAround 12s infinite ease-in-out alternate;
     }
+
+    /* Bộ sưu tập màu sắc sinh động */
+    .style-1 { background: #fff0f3; color: #ff4d6d; border: 2px solid #ff758c; }
+    .style-2 { background: #e8f4f8; color: #1d3557; border: 2px solid #457b9d; }
+    .style-3 { background: #fefae0; color: #bc6c25; border: 2px solid #dda15e; }
+    .style-4 { background: #f3c4fb; color: #7209b7; border: 2px solid #b5179e; }
+    .style-5 { background: #e2f0cb; color: #386641; border: 2px solid #6a994e; }
+    .style-6 { background: #ffccd5; color: #c9184a; border: 2px solid #ff758c; }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
@@ -175,11 +181,14 @@
 
     function createFloatingNote(text) {
       const note = document.createElement('div');
-      note.className = 'floating-note';
+      
+      // Chọn ngẫu nhiên một kiểu màu sắc khung chữ từ style-1 đến style-6
+      const randomStyleNum = Math.floor(Math.random() * 6) + 1;
+      note.className = `floating-note style-${randomStyleNum}`;
       note.innerText = '💌 ' + text;
 
       const randomTop = Math.floor(Math.random() * (window.innerHeight - 100)) + 20;
-      const randomLeft = Math.floor(Math.random() * (window.innerWidth - 150)) + 20;
+      const randomLeft = Math.floor(Math.random() * (window.innerWidth - 180)) + 20;
       const randomDuration = Math.floor(Math.random() * 6) + 8;
 
       note.style.top = randomTop + 'px';
