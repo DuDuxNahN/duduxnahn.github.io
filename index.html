@@ -65,6 +65,7 @@
       box-shadow: 0 4px 12px rgba(231, 111, 81, 0.4);
       width: 100%;
       transition: 0.2s;
+      margin-top: 5px;
     }
 
     .btn-action:active {
@@ -89,6 +90,18 @@
       width: 100%;
     }
 
+    .file-upload-label {
+      font-size: 0.85rem;
+      color: #e76f51;
+      font-weight: bold;
+      cursor: pointer;
+      background: #fff0f3;
+      padding: 6px;
+      border-radius: 8px;
+      border: 1px dashed #ff758c;
+      display: block;
+    }
+
     .time-select {
       padding: 6px 10px;
       border: 2px solid #f4a261;
@@ -108,12 +121,12 @@
       font-weight: bold;
       display: none;
       margin-top: 2px;
-      animation: fadeIn 0.3s ease;
     }
 
+    /* Khung khoảnh khắc/lời nhắn nảy quanh màn hình */
     .floating-note {
       position: absolute;
-      padding: 8px 14px;
+      padding: 8px 12px;
       border-radius: 16px;
       font-weight: bold;
       font-size: 0.85rem;
@@ -121,15 +134,27 @@
       cursor: pointer;
       white-space: nowrap;
       z-index: 10;
-      transition: opacity 0.5s ease, transform 0.2s ease;
+      transition: opacity 0.5s ease, transform 0.1s ease;
       border-width: 3px;
       border-style: solid;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
     }
 
     .floating-note:active {
-      transform: scale(0.9);
+      transform: scale(0.92);
     }
 
+    .floating-note img, .floating-note video {
+      width: 70px;
+      height: 70px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    /* Hiệu ứng nổ tung 9 trái tim */
     .explosion-heart {
       position: absolute;
       font-size: 1.3rem;
@@ -175,8 +200,13 @@
     <button id="hugBtn" class="btn-action" onclick="startHug()">Ấn để Dudu ôm Bubu 🐾</button>
 
     <div id="messageForm" class="message-form">
-      <input type="text" id="noteInput" class="message-input" placeholder="Để lại lời nhắn chung..." maxlength="50">
+      <input type="text" id="noteInput" class="message-input" placeholder="Nhập lời nhắn..." maxlength="50">
       
+      <label class="file-upload-label">
+        📁 Chọn Ảnh / Video khoảnh khắc
+        <input type="file" id="mediaFile" accept="image/*,video/*" style="display: none;">
+      </label>
+
       <select id="timeSelect" class="time-select">
         <option value="60">Thời gian: 60 giây</option>
         <option value="300">Thời gian: 5 phút</option>
@@ -190,8 +220,8 @@
         <option value="28800">Thời gian: 8 giờ</option>
       </select>
 
-      <button class="btn-action" style="background-color: #2a9d8f;" onclick="saveNote()">Gửi lời nhắn ✨</button>
-      <div id="limitWarning" class="limit-warning">⚠️ Đã đạt tối đa 10 lời nhắn! Hãy chạm vào các lời nhắn có sẵn để xóa bớt nhé!</div>
+      <button class="btn-action" style="background-color: #2a9d8f;" onclick="saveNote()">Gửi khoảnh khắc ✨</button>
+      <div id="limitWarning" class="limit-warning">⚠️ Đã đạt tối đa 20 khoảnh khắc!</div>
     </div>
   </div>
 
@@ -223,18 +253,33 @@
 
     function saveNote() {
       const input = document.getElementById('noteInput');
+      const fileInput = document.getElementById('mediaFile');
       const timeSelect = document.getElementById('timeSelect');
       const warning = document.getElementById('limitWarning');
       const text = input.value.trim();
       const durationSeconds = parseInt(timeSelect.value);
 
-      if (text !== "") {
-        if (activeNotes.length >= 10) {
-          warning.style.display = 'block';
-          return;
-        }
+      if (activeNotes.length >= 20) {
+        warning.style.display = 'block';
+        return;
+      }
 
-        warning.style.display = 'none';
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          db.ref('notes').push({
+            text: text,
+            mediaUrl: e.target.result,
+            mediaType: file.type.startsWith('video') ? 'video' : 'image',
+            timestamp: Date.now(),
+            duration: durationSeconds * 1000
+          });
+          input.value = '';
+          fileInput.value = '';
+        };
+        reader.readAsDataURL(file);
+      } else if (text !== "") {
         db.ref('notes').push({
           text: text,
           timestamp: Date.now(),
@@ -246,12 +291,10 @@
 
     function triggerExplosion(x, y) {
       const heartEmojis = ['💖', '💕', '💓', '💗', '💘', '💜', '💙', '💚', '💛'];
-      
       for (let i = 0; i < 9; i++) {
         const heart = document.createElement('div');
         heart.className = 'explosion-heart';
         heart.innerText = heartEmojis[i];
-        
         heart.style.left = x + 'px';
         heart.style.top = y + 'px';
 
@@ -268,10 +311,10 @@
       }
     }
 
-    function createBouncingNote(text, timestamp, duration, noteId) {
+    function createBouncingNote(data, noteId) {
       const warning = document.getElementById('limitWarning');
 
-      if (activeNotes.length >= 10) {
+      if (activeNotes.length >= 20) {
         warning.style.display = 'block';
         return;
       }
@@ -279,43 +322,62 @@
       const note = document.createElement('div');
       const randomStyleNum = Math.floor(Math.random() * 6) + 1;
       note.className = `floating-note style-${randomStyleNum}`;
-      note.innerText = '💌 ' + text;
+
+      let contentHTML = '';
+      if (data.mediaUrl) {
+        if (data.mediaType === 'video') {
+          contentHTML += `<video src="${data.mediaUrl}" autoplay muted loop></video>`;
+        } else {
+          contentHTML += `<img src="${data.mediaUrl}" alt="media">`;
+        }
+      }
+      if (data.text) {
+        contentHTML += `<span>💌 ${data.text}</span>`;
+      }
+      note.innerHTML = contentHTML;
       document.body.appendChild(note);
 
-      const TOTAL_LIFETIME = duration || (2 * 3600 * 1000);
+      const TOTAL_LIFETIME = data.duration || (2 * 3600 * 1000);
       const now = Date.now();
-      const msgTime = timestamp || now;
+      const msgTime = data.timestamp || now;
       let remainingTime = TOTAL_LIFETIME - (now - msgTime);
 
       if (remainingTime <= 0) {
-        // Nếu đã hết giờ từ trước, xóa luôn trên Firebase
         if (noteId) db.ref('notes/' + noteId).remove();
         note.remove();
         return;
       }
 
-      // Xóa vĩnh viễn trên Firebase và giao diện khi chạm vào
-      const removeNoteAction = () => {
-        const rect = note.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        clearInterval(timerInterval);
-        note.remove();
-        
-        // Xóa khỏi Database Firebase để tải lại không bị hiện lại
-        if (noteId) {
-          db.ref('notes/' + noteId).remove();
-        }
-        
-        const index = activeNotes.findIndex(item => item.element === note);
-        if (index > -1) activeNotes.splice(index, 1);
+      // Cần ấn liên tục 3 lần mới nổ tung và biến mất vĩnh viễn
+      let clickCount = 0;
+      const removeNoteAction = (e) => {
+        e.stopPropagation();
+        clickCount++;
 
-        if (activeNotes.length < 10) {
-          warning.style.display = 'none';
-        }
+        note.style.transform = `scale(0.85) rotate(${Math.random() * 10 - 5}deg)`;
+        setTimeout(() => { note.style.transform = 'scale(1) rotate(0deg)'; }, 100);
 
-        triggerExplosion(centerX, centerY);
+        if (clickCount >= 3) {
+          const rect = note.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          
+          clearInterval(timerInterval);
+          note.remove();
+          
+          if (noteId) {
+            db.ref('notes/' + noteId).remove();
+          }
+          
+          const index = activeNotes.findIndex(item => item.element === note);
+          if (index > -1) activeNotes.splice(index, 1);
+
+          if (activeNotes.length < 20) {
+            warning.style.display = 'none';
+          }
+
+          triggerExplosion(centerX, centerY);
+        }
       };
 
       note.addEventListener('click', removeNoteAction);
@@ -337,7 +399,7 @@
           const index = activeNotes.findIndex(item => item.element === note);
           if (index > -1) activeNotes.splice(index, 1);
 
-          if (activeNotes.length < 10) {
+          if (activeNotes.length < 20) {
             warning.style.display = 'none';
           }
 
@@ -347,7 +409,7 @@
 
       activeNotes.push({ element: note, timer: timerInterval });
 
-      if (activeNotes.length >= 10) {
+      if (activeNotes.length >= 20) {
         warning.style.display = 'block';
       }
 
@@ -356,19 +418,19 @@
       
       for (let i = 0; i < 20; i++) {
         posX = Math.random() * (window.innerWidth - 120);
-        posY = Math.random() * (window.innerHeight - 80);
+        posY = Math.random() * (window.innerHeight - 100);
         if (
           posX + 120 < container.left || posX > container.right ||
-          posY + 40 < container.top || posY > container.bottom
+          posY + 60 < container.top || posY > container.bottom
         ) {
           break;
         }
       }
 
-      let speedX = (Math.random() - 0.5) * 2;
-      let speedY = (Math.random() - 0.5) * 2;
-      if (Math.abs(speedX) < 0.8) speedX = 1;
-      if (Math.abs(speedY) < 0.8) speedY = 1;
+      let speedX = (Math.random() - 0.5) * 1.8;
+      let speedY = (Math.random() - 0.5) * 1.8;
+      if (Math.abs(speedX) < 0.6) speedX = 0.8;
+      if (Math.abs(speedY) < 0.6) speedY = 0.8;
 
       function updatePosition() {
         if (!document.body.contains(note)) return;
@@ -417,11 +479,10 @@
     }
 
     window.onload = function() {
-      // Lắng nghe sự kiện thêm mới tin nhắn
       db.ref('notes').on('child_added', function(snapshot) {
         const data = snapshot.val();
-        if (data && data.text) {
-          createBouncingNote(data.text, data.timestamp, data.duration, snapshot.key);
+        if (data && (data.text || data.mediaUrl)) {
+          createBouncingNote(data, snapshot.key);
         }
       });
     };
