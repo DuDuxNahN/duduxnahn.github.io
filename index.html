@@ -102,7 +102,17 @@
       width: 100%;
     }
 
-    /* Khung lời nhắn nảy tự do */
+    /* Thông báo khi đạt giới hạn */
+    .limit-warning {
+      color: #e76f51;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: none;
+      margin-top: 2px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    /* Khung lời nhắn có thể bấm vào để nổ */
     .floating-note {
       position: absolute;
       padding: 8px 14px;
@@ -110,35 +120,38 @@
       font-weight: bold;
       font-size: 0.85rem;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      pointer-events: none;
+      cursor: pointer;
       white-space: nowrap;
       z-index: 10;
-      transition: opacity 0.5s ease, transform 0.5s ease;
+      transition: opacity 0.5s ease, transform 0.2s ease;
       border-width: 3px;
       border-style: solid;
     }
 
-    /* Hiệu ứng hạt trái tim nổ tung */
+    .floating-note:active {
+      transform: scale(0.9);
+    }
+
+    /* Hiệu ứng hạt 9 trái tim đủ màu nổ tung */
     .explosion-heart {
       position: absolute;
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       pointer-events: none;
       z-index: 30;
-      animation: explodeAnim 0.8s forwards ease-out;
+      animation: explodeAnim 0.7s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
     }
 
     @keyframes explodeAnim {
       0% {
-        transform: translate(0, 0) scale(0.5);
+        transform: translate(0, 0) scale(0.4);
         opacity: 1;
       }
       100% {
-        transform: translate(var(--tx), var(--ty)) scale(1.4);
+        transform: translate(var(--tx), var(--ty)) scale(1.3);
         opacity: 0;
       }
     }
 
-    /* 6 kiểu khung chữ với màu sắc khác nhau */
     .style-1 { background: #fff0f3; color: #ff4d6d; border-color: #ff758c; }
     .style-2 { background: #e8f4f8; color: #1d3557; border-color: #457b9d; }
     .style-3 { background: #fefae0; color: #bc6c25; border-color: #dda15e; }
@@ -168,26 +181,25 @@
     <div id="messageForm" class="message-form">
       <input type="text" id="noteInput" class="message-input" placeholder="Để lại lời nhắn chung..." maxlength="50">
       
-      <!-- Khung chọn thời gian tồn tại chi tiết -->
       <select id="timeSelect" class="time-select">
-        <option value="60">Thời gian tồn tại: 60 giây</option>
-        <option value="300">Thời gian tồn tại: 5 phút</option>
-        <option value="600">Thời gian tồn tại: 10 phút</option>
-        <option value="900">Thời gian tồn tại: 15 phút</option>
-        <option value="1800">Thời gian tồn tại: 30 phút</option>
-        <option value="3600">Thời gian tồn tại: 1 giờ</option>
-        <option value="7200" selected>Thời gian tồn tại: 2 giờ (Mặc định)</option>
-        <option value="18000">Thời gian tồn tại: 5 giờ</option>
-        <option value="21600">Thời gian tồn tại: 6 giờ</option>
-        <option value="28800">Thời gian tồn tại: 8 giờ</option>
+        <option value="60">Thời gian: 60 giây</option>
+        <option value="300">Thời gian: 5 phút</option>
+        <option value="600">Thời gian: 10 phút</option>
+        <option value="900">Thời gian: 15 phút</option>
+        <option value="1800">Thời gian: 30 phút</option>
+        <option value="3600">Thời gian: 1 giờ</option>
+        <option value="7200" selected>Thời gian: 2 giờ (Mặc định)</option>
+        <option value="18000">Thời gian: 5 giờ</option>
+        <option value="21600">Thời gian: 6 giờ</option>
+        <option value="28800">Thời gian: 8 giờ</option>
       </select>
 
       <button class="btn-action" style="background-color: #2a9d8f;" onclick="saveNote()">Gửi lời nhắn ✨</button>
+      <div id="limitWarning" class="limit-warning">⚠️ Đã đạt tối đa 10 lời nhắn! Hãy chạm vào các lời nhắn có sẵn để làm bớt nhé!</div>
     </div>
   </div>
 
   <script>
-    // Cấu hình Firebase của bạn
     const firebaseConfig = {
       apiKey: "AIzaSyABW8qlALzqJXB5GYReEz2gMFmIMHzHXBM",
       authDomain: "budu-note.firebaseapp.com",
@@ -198,7 +210,6 @@
       appId: "1:751175174116:web:13ceee8e30b1d22a0469f1"
     };
 
-    // Khởi tạo Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
@@ -212,13 +223,22 @@
       messageForm.style.display = 'flex';
     }
 
+    const activeNotes = [];
+
     function saveNote() {
       const input = document.getElementById('noteInput');
       const timeSelect = document.getElementById('timeSelect');
+      const warning = document.getElementById('limitWarning');
       const text = input.value.trim();
       const durationSeconds = parseInt(timeSelect.value);
 
       if (text !== "") {
+        if (activeNotes.length >= 10) {
+          warning.style.display = 'block';
+          return;
+        }
+
+        warning.style.display = 'none';
         db.ref('notes').push({
           text: text,
           timestamp: Date.now(),
@@ -228,23 +248,19 @@
       }
     }
 
-    // Hàm tạo hiệu ứng nổ tung thành trái tim khi tin nhắn hết hạn
     function triggerExplosion(x, y) {
-      const heartEmojis = ['💖', '💕', '💓', '💗', '💘', '✨'];
-      const particleCount = 10; // Số lượng trái tim bắn ra
-
-      for (let i = 0; i < particleCount; i++) {
+      const heartEmojis = ['💖', '💕', '💓', '💗', '💘', '💜', '💙', '💚', '💛'];
+      
+      for (let i = 0; i < 9; i++) {
         const heart = document.createElement('div');
         heart.className = 'explosion-heart';
-        heart.innerText = heartEmojis[Math.floor(Math.random() * heartEmojis.length)];
+        heart.innerText = heartEmojis[i];
         
-        // Vị trí trung tâm lúc nổ
         heart.style.left = x + 'px';
         heart.style.top = y + 'px';
 
-        // Góc bay ngẫu nhiên theo hình tròn
-        const angle = Math.random * Math.PI * 2;
-        const distance = 40 + Math.random() * 60; // Khoảng cách bay ra
+        const angle = (i / 9) * Math.PI * 2;
+        const distance = 50 + Math.random() * 40;
         const tx = Math.cos(angle) * distance;
         const ty = Math.sin(angle) * distance;
 
@@ -252,16 +268,19 @@
         heart.style.setProperty('--ty', ty + 'px');
 
         document.body.appendChild(heart);
-
-        // Xóa phần tử sau khi chạy xong animation
-        setTimeout(() => heart.remove(), 800);
+        setTimeout(() => heart.remove(), 700);
       }
     }
 
-    // Hàm tạo lời nhắn nảy, chống kẹt, tự động nổ tung khi hết giờ
     function createBouncingNote(text, timestamp, duration) {
+      const warning = document.getElementById('limitWarning');
+
+      if (activeNotes.length >= 10) {
+        warning.style.display = 'block';
+        return;
+      }
+
       const note = document.createElement('div');
-      
       const randomStyleNum = Math.floor(Math.random() * 6) + 1;
       note.className = `floating-note style-${randomStyleNum}`;
       note.innerText = '💌 ' + text;
@@ -270,43 +289,66 @@
       const TOTAL_LIFETIME = duration || (2 * 3600 * 1000);
       const now = Date.now();
       const msgTime = timestamp || now;
-      let elapsedTime = now - msgTime;
-      let remainingTime = TOTAL_LIFETIME - elapsedTime;
+      let remainingTime = TOTAL_LIFETIME - (now - msgTime);
 
       if (remainingTime <= 0) {
         note.remove();
         return;
       }
 
-      // Đếm ngược thời gian, khi hết giờ thì nổ tung thành trái tim rồi biến mất
-      const timerInterval = setInterval(() => {
-        const currentElapsed = Date.now() - msgTime;
-        const currentRemaining = TOTAL_LIFETIME - currentElapsed;
+      const removeNoteAction = () => {
+        const rect = note.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        clearInterval(timerInterval);
+        note.remove();
+        
+        const index = activeNotes.findIndex(item => item.element === note);
+        if (index > -1) activeNotes.splice(index, 1);
 
+        if (activeNotes.length < 10) {
+          warning.style.display = 'none';
+        }
+
+        triggerExplosion(centerX, centerY);
+      };
+
+      note.addEventListener('click', removeNoteAction);
+      note.addEventListener('touchstart', removeNoteAction);
+
+      const timerInterval = setInterval(() => {
+        const currentRemaining = TOTAL_LIFETIME - (Date.now() - msgTime);
         if (currentRemaining <= 0) {
           clearInterval(timerInterval);
-          
-          // Lấy tọa độ chính xác của ô tin nhắn trước khi xóa để làm tâm nổ
           const rect = note.getBoundingClientRect();
           const centerX = rect.left + rect.width / 2;
           const centerY = rect.top + rect.height / 2;
-
+          
           note.remove();
-          triggerExplosion(centerX, centerY); // Kích hoạt hiệu ứng pháo hoa trái tim
-        } else {
-          const ratio = currentRemaining / TOTAL_LIFETIME;
-          note.style.opacity = Math.max(0.4, ratio);
+          const index = activeNotes.findIndex(item => item.element === note);
+          if (index > -1) activeNotes.splice(index, 1);
+
+          if (activeNotes.length < 10) {
+            warning.style.display = 'none';
+          }
+
+          triggerExplosion(centerX, centerY);
         }
       }, 1000);
 
-      // Đảm bảo vị trí xuất phát không đè vào khung chat
+      activeNotes.push({ element: note, timer: timerInterval });
+
+      if (activeNotes.length >= 10) {
+        warning.style.display = 'block';
+      }
+
       let posX, posY;
       const container = document.querySelector('.scene-container').getBoundingClientRect();
       
       for (let i = 0; i < 20; i++) {
         posX = Math.random() * (window.innerWidth - 120);
         posY = Math.random() * (window.innerHeight - 80);
-        
         if (
           posX + 120 < container.left || posX > container.right ||
           posY + 40 < container.top || posY > container.bottom
@@ -315,12 +357,14 @@
         }
       }
 
-      let speedX = (Math.random() - 0.5) * 2.5;
-      let speedY = (Math.random() - 0.5) * 2.5;
-      if (Math.abs(speedX) < 1) speedX = 1.2;
-      if (Math.abs(speedY) < 1) speedY = 1.2;
+      let speedX = (Math.random() - 0.5) * 2;
+      let speedY = (Math.random() - 0.5) * 2;
+      if (Math.abs(speedX) < 0.8) speedX = 1;
+      if (Math.abs(speedY) < 0.8) speedY = 1;
 
       function updatePosition() {
+        if (!document.body.contains(note)) return;
+
         const rect = note.getBoundingClientRect();
         const currentContainer = document.querySelector('.scene-container').getBoundingClientRect();
         
@@ -330,11 +374,11 @@
         posX += speedX;
         posY += speedY;
 
-        if (posX <= 2) { speedX = Math.abs(speedX); posX = 2; }
-        else if (posX >= maxX - 2) { speedX = -Math.abs(speedX); posX = maxX - 2; }
+        if (posX <= 5) { speedX = Math.abs(speedX); posX = 6; }
+        else if (posX >= maxX - 5) { speedX = -Math.abs(speedX); posX = maxX - 6; }
 
-        if (posY <= 2) { speedY = Math.abs(speedY); posY = 2; }
-        else if (posY >= maxY - 2) { speedY = -Math.abs(speedY); posY = maxY - 2; }
+        if (posY <= 5) { speedY = Math.abs(speedY); posY = 6; }
+        else if (posY >= maxY - 5) { speedY = -Math.abs(speedY); posY = maxY - 6; }
 
         const nextRect = {
           left: posX,
@@ -351,8 +395,8 @@
         ) {
           speedX *= -1;
           speedY *= -1;
-          posX += speedX * 4;
-          posY += speedY * 4;
+          posX += speedX * 6;
+          posY += speedY * 6;
         }
 
         note.style.left = posX + 'px';
@@ -364,7 +408,6 @@
       requestAnimationFrame(updatePosition);
     }
 
-    // Tự động lắng nghe lời nhắn từ Firebase
     window.onload = function() {
       db.ref('notes').on('child_added', function(snapshot) {
         const data = snapshot.val();
@@ -375,4 +418,5 @@
     };
   </script>
 </body>
-</html>
+    </html>
+  
