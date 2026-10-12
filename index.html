@@ -22,6 +22,127 @@
       position: relative;
     }
 
+    /* Nút "Cùng nhau" ở góc phải trên */
+    .together-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #e76f51;
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(231, 111, 81, 0.4);
+      z-index: 100;
+      transition: 0.2s;
+    }
+
+    .together-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Popup To-do List */
+    .todo-modal {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      border: 3px solid #f4a261;
+      width: 320px;
+      max-height: 80vh;
+      z-index: 200;
+      flex-direction: column;
+      gap: 12px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .todo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      color: #e76f51;
+      font-size: 1.1rem;
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: #888;
+    }
+
+    .todo-input-box {
+      display: flex;
+      gap: 6px;
+    }
+
+    .todo-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 2px solid #f4a261;
+      border-radius: 10px;
+      outline: none;
+      font-size: 0.9rem;
+    }
+
+    .todo-add-btn {
+      background-color: #2a9d8f;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .todo-list {
+      list-style: none;
+      max-height: 200px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .todo-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fdf0ed;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #333;
+      border: 1px solid #f4a261;
+    }
+
+    .todo-item.completed span {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+
+    .todo-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .todo-actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
     .scene-container {
       text-align: center;
       z-index: 20;
@@ -123,7 +244,6 @@
       margin-top: 2px;
     }
 
-    /* Khung khoảnh khắc/lời nhắn nảy quanh màn hình */
     .floating-note {
       position: absolute;
       padding: 8px 12px;
@@ -154,7 +274,6 @@
       object-fit: cover;
     }
 
-    /* Hiệu ứng nổ tung 9 trái tim */
     .explosion-heart {
       position: absolute;
       font-size: 1.3rem;
@@ -191,6 +310,22 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
+
+  <!-- Nút "Cùng nhau" ở góc phải trên -->
+  <button class="together-btn" onclick="toggleTodoModal()">Cùng nhau 💕</button>
+
+  <!-- Popup To-do List -->
+  <div id="todoModal" class="todo-modal">
+    <div class="todo-header">
+      <span>✨ Việc Cùng Nhau ✨</span>
+      <button class="close-modal" onclick="toggleTodoModal()">×</button>
+    </div>
+    <div class="todo-input-box">
+      <input type="text" id="todoInput" class="todo-input" placeholder="Thêm việc cần làm..." maxlength="40">
+      <button class="todo-add-btn" onclick="addTodo()">Thêm</button>
+    </div>
+    <ul id="todoList" class="todo-list"></ul>
+  </div>
 
   <div class="scene-container">
     <div class="gif-box">
@@ -247,6 +382,54 @@
       gifImg.src = "bubu2.gif";
       hugBtn.style.display = 'none';
       messageForm.style.display = 'flex';
+    }
+
+    // Xử lý mở/đóng bảng To-do list
+    function toggleTodoModal() {
+      const modal = document.getElementById('todoModal');
+      modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    // Thêm việc cần làm lên Firebase
+    function addTodo() {
+      const input = document.getElementById('todoInput');
+      const text = input.value.trim();
+      if (text !== "") {
+        db.ref('todos').push({
+          text: text,
+          completed: false
+        });
+        input.value = '';
+      }
+    }
+
+    // Lắng nghe và hiển thị To-do list thời gian thực
+    db.ref('todos').on('value', function(snapshot) {
+      const todoList = document.getElementById('todoList');
+      todoList.innerHTML = '';
+      snapshot.forEach(function(childSnapshot) {
+        const todo = childSnapshot.val();
+        const todoId = childSnapshot.key;
+
+        const li = document.createElement('li');
+        li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+        li.innerHTML = `
+          <span>${todo.text}</span>
+          <div class="todo-actions">
+            <button onclick="toggleTodo('${todoId}', ${!todo.completed})">✅</button>
+            <button onclick="deleteTodo('${todoId}')">❌</button>
+          </div>
+        `;
+        todoList.appendChild(li);
+      });
+    });
+
+    function toggleTodo(id, status) {
+      db.ref('todos/' + id).update({ completed: status });
+    }
+
+    function deleteTodo(id) {
+      db.ref('todos/' + id).remove();
     }
 
     const activeNotes = [];
@@ -343,6 +526,153 @@
       let remainingTime = TOTAL_LIFETIME - (now - msgTime);
 
       if (remainingTime <= 0) {
+        if (noteId) db.ref('notes/' + noteId).remove();
+        note.remove();
+        return;
+      }
+
+      // Cần ấn liên tục 3 lần mới nổ tung
+      let clickCount = 0;
+      const removeNoteAction = (e) => {
+        e.stopPropagation();
+        clickCount++;
+
+        note.style.transform = `scale(0.85) rotate(${Math.random() * 10 - 5}deg)`;
+        setTimeout(() => { note.style.transform = 'scale(1) rotate(0deg)'; }, 100);
+
+        if (clickCount >= 3) {
+          const rect = note.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          
+          clearInterval(timerInterval);
+          note.remove();
+          
+          if (noteId) {
+            db.ref('notes/' + noteId).remove();
+          }
+          
+          const index = activeNotes.findIndex(item => item.element === note);
+          if (index > -1) activeNotes.splice(index, 1);
+
+          if (activeNotes.length < 20) {
+            warning.style.display = 'none';
+          }
+
+          triggerExplosion(centerX, centerY);
+        }
+      };
+
+      note.addEventListener('click', removeNoteAction);
+      note.addEventListener('touchstart', removeNoteAction);
+
+      const timerInterval = setInterval(() => {
+        const currentRemaining = TOTAL_LIFETIME - (Date.now() - msgTime);
+        if (currentRemaining <= 0) {
+          clearInterval(timerInterval);
+          const rect = note.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          
+          note.remove();
+          if (noteId) {
+            db.ref('notes/' + noteId).remove();
+          }
+
+          const index = activeNotes.findIndex(item => item.element === note);
+          if (index > -1) activeNotes.splice(index, 1);
+
+          if (activeNotes.length < 20) {
+            warning.style.display = 'none';
+          }
+
+          triggerExplosion(centerX, centerY);
+        }
+      }, 1000);
+
+      activeNotes.push({ element: note, timer: timerInterval });
+
+      if (activeNotes.length >= 20) {
+        warning.style.display = 'block';
+      }
+
+      let posX, posY;
+      const container = document.querySelector('.scene-container').getBoundingClientRect();
+      
+      for (let i = 0; i < 20; i++) {
+        posX = Math.random() * (window.innerWidth - 120);
+        posY = Math.random() * (window.innerHeight - 100);
+        if (
+          posX + 120 < container.left || posX > container.right ||
+          posY + 60 < container.top || posY > container.bottom
+        ) {
+          break;
+        }
+      }
+
+      let speedX = (Math.random() - 0.5) * 1.8;
+      let speedY = (Math.random() - 0.5) * 1.8;
+      if (Math.abs(speedX) < 0.6) speedX = 0.8;
+      if (Math.abs(speedY) < 0.6) speedY = 0.8;
+
+      function updatePosition() {
+        if (!document.body.contains(note)) return;
+
+        const rect = note.getBoundingClientRect();
+        const currentContainer = document.querySelector('.scene-container').getBoundingClientRect();
+        
+        const maxX = window.innerWidth - rect.width;
+        const maxY = window.innerHeight - rect.height;
+
+        posX += speedX;
+        posY += speedY;
+
+        if (posX <= 5) { speedX = Math.abs(speedX); posX = 6; }
+        else if (posX >= maxX - 5) { speedX = -Math.abs(speedX); posX = maxX - 6; }
+
+        if (posY <= 5) { speedY = Math.abs(speedY); posY = 6; }
+        else if (posY >= maxY - 5) { speedY = -Math.abs(speedY); posY = maxY - 6; }
+
+        const nextRect = {
+          left: posX,
+          top: posY,
+          right: posX + rect.width,
+          bottom: posY + rect.height
+        };
+
+        if (
+          nextRect.right > currentContainer.left &&
+          nextRect.left < currentContainer.right &&
+          nextRect.bottom > currentContainer.top &&
+          nextRect.top < currentContainer.bottom
+        ) {
+          speedX *= -1;
+          speedY *= -1;
+          posX += speedX * 6;
+          posY += speedY * 6;
+        }
+
+        note.style.left = posX + 'px';
+        note.style.top = posY + 'px';
+
+        requestAnimationFrame(updatePosition);
+      }
+
+      requestAnimationFrame(updatePosition);
+    }
+
+    window.onload = function() {
+      db.ref('notes').on('child_added', function(snapshot) {
+        const data = snapshot.val();
+        if (data && (data.text || data.mediaUrl)) {
+          createBouncingNote(data, snapshot.key);
+        }
+      });
+    };
+  </script>
+</body>
+</html>
+ 0) {
         if (noteId) db.ref('notes/' + noteId).remove();
         note.remove();
         return;
