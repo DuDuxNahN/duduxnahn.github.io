@@ -25,8 +25,8 @@
     .scene-container {
       text-align: center;
       z-index: 10;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 30px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
       border-radius: 24px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
       border: 3px solid #f4a261;
@@ -35,21 +35,18 @@
     }
 
     .gif-box {
-      width: 220px;
-      height: 220px;
+      width: 200px;
+      height: 200px;
       margin: 0 auto 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #fff5eb;
-      border-radius: 16px;
-      border: 2px dashed #f4a261;
     }
 
     .gif-box img {
       max-width: 100%;
       max-height: 100%;
-      border-radius: 12px;
+      border-radius: 16px;
       object-fit: contain;
     }
 
@@ -63,8 +60,8 @@
       border-radius: 50px;
       cursor: pointer;
       box-shadow: 0 4px 15px rgba(231, 111, 81, 0.4);
-      transition: all 0.2s ease;
       width: 100%;
+      transition: 0.2s;
     }
 
     .btn-action:active {
@@ -118,34 +115,48 @@
       100% { transform: translate(-70px, -60px) rotate(-5deg); }
     }
   </style>
+
+  <!-- Thư viện Firebase bản tương thích (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
   <div class="scene-container">
     <div class="gif-box">
-      <!-- Ảnh gốc Bubu Dudu chào hỏi -->
-      <img id="bubuGif" src="https://i.imgur.com/2U55j7q.gif" alt="Bubu Dudu">
+      <img id="bubuGif" src="bubu1.gif" alt="Bubu Dudu">
     </div>
 
-    <button id="hugBtn" class="btn-action" onclick="startHug()">Ấn để Dudu chạy tới ôm Bubu 🐾</button>
+    <button id="hugBtn" class="btn-action" onclick="startHug()">Ấn để Dudu ôm Bubu 🐾</button>
 
-    <!-- Ô gửi lời nhắn (Ẩn đi ban đầu) -->
     <div id="messageForm" class="message-form">
-      <input type="text" id="noteInput" class="message-input" placeholder="Để lại lời nhắn yêu thương..." maxlength="50">
+      <input type="text" id="noteInput" class="message-input" placeholder="Để lại lời nhắn chung..." maxlength="50">
       <button class="btn-action" style="background-color: #2a9d8f;" onclick="saveNote()">Gửi lời nhắn ✨</button>
     </div>
   </div>
 
   <script>
+    // Cấu hình Firebase đã điền sẵn cho bạn
+    const firebaseConfig = {
+      apiKey: "AIzaSyABW8qlALzqJXB5GYReEz2gMFmIMHzHXBM",
+      authDomain: "budu-note.firebaseapp.com",
+      databaseURL: "https://budu-note-default-rtdb.firebaseio.com",
+      projectId: "budu-note",
+      storageBucket: "budu-note.firebasestorage.app",
+      messagingSenderId: "751175174116",
+      appId: "1:751175174116:web:13ceee8e30b1d22a0469f1"
+    };
+
+    // Khởi tạo Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
     function startHug() {
       const gifImg = document.getElementById('bubuGif');
       const hugBtn = document.getElementById('hugBtn');
       const messageForm = document.getElementById('messageForm');
 
-      // Đổi sang GIF Dudu ôm nhau ấm áp
-      gifImg.src = "https://i.imgur.com/4A018v3.gif";
-      
-      // Biến mất nút bấm vĩnh viễn và hiện ô lời nhắn
+      gifImg.src = "bubu2.gif";
       hugBtn.style.display = 'none';
       messageForm.style.display = 'flex';
     }
@@ -155,11 +166,9 @@
       const text = input.value.trim();
 
       if (text !== "") {
-        let notes = JSON.parse(localStorage.getItem('bubu_notes')) || [];
-        notes.push(text);
-        localStorage.setItem('bubu_notes', JSON.stringify(notes));
-
-        createFloatingNote(text);
+        db.ref('notes').push({
+          text: text
+        });
         input.value = '';
       }
     }
@@ -180,10 +189,13 @@
       document.body.appendChild(note);
     }
 
+    // Tự động lắng nghe lời nhắn thời gian thực từ mọi người
     window.onload = function() {
-      let notes = JSON.parse(localStorage.getItem('bubu_notes')) || [];
-      notes.forEach(text => {
-        createFloatingNote(text);
+      db.ref('notes').on('child_added', function(snapshot) {
+        const data = snapshot.val();
+        if (data && data.text) {
+          createFloatingNote(data.text);
+        }
       });
     };
   </script>
