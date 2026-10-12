@@ -102,7 +102,6 @@
       width: 100%;
     }
 
-    /* Thông báo khi đạt giới hạn */
     .limit-warning {
       color: #e76f51;
       font-size: 0.8rem;
@@ -112,7 +111,6 @@
       animation: fadeIn 0.3s ease;
     }
 
-    /* Khung lời nhắn có thể bấm vào để nổ */
     .floating-note {
       position: absolute;
       padding: 8px 14px;
@@ -132,7 +130,6 @@
       transform: scale(0.9);
     }
 
-    /* Hiệu ứng hạt 9 trái tim đủ màu nổ tung */
     .explosion-heart {
       position: absolute;
       font-size: 1.3rem;
@@ -165,7 +162,6 @@
     }
   </style>
 
-  <!-- Thư viện Firebase bản tương thích (compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
@@ -195,7 +191,7 @@
       </select>
 
       <button class="btn-action" style="background-color: #2a9d8f;" onclick="saveNote()">Gửi lời nhắn ✨</button>
-      <div id="limitWarning" class="limit-warning">⚠️ Đã đạt tối đa 10 lời nhắn! Hãy chạm vào các lời nhắn có sẵn để làm bớt nhé!</div>
+      <div id="limitWarning" class="limit-warning">⚠️ Đã đạt tối đa 10 lời nhắn! Hãy chạm vào các lời nhắn có sẵn để xóa bớt nhé!</div>
     </div>
   </div>
 
@@ -272,7 +268,7 @@
       }
     }
 
-    function createBouncingNote(text, timestamp, duration) {
+    function createBouncingNote(text, timestamp, duration, noteId) {
       const warning = document.getElementById('limitWarning');
 
       if (activeNotes.length >= 10) {
@@ -292,10 +288,13 @@
       let remainingTime = TOTAL_LIFETIME - (now - msgTime);
 
       if (remainingTime <= 0) {
+        // Nếu đã hết giờ từ trước, xóa luôn trên Firebase
+        if (noteId) db.ref('notes/' + noteId).remove();
         note.remove();
         return;
       }
 
+      // Xóa vĩnh viễn trên Firebase và giao diện khi chạm vào
       const removeNoteAction = () => {
         const rect = note.getBoundingClientRect();
         const centerX = rect.left + rect.width / 2;
@@ -303,6 +302,11 @@
         
         clearInterval(timerInterval);
         note.remove();
+        
+        // Xóa khỏi Database Firebase để tải lại không bị hiện lại
+        if (noteId) {
+          db.ref('notes/' + noteId).remove();
+        }
         
         const index = activeNotes.findIndex(item => item.element === note);
         if (index > -1) activeNotes.splice(index, 1);
@@ -326,6 +330,10 @@
           const centerY = rect.top + rect.height / 2;
           
           note.remove();
+          if (noteId) {
+            db.ref('notes/' + noteId).remove();
+          }
+
           const index = activeNotes.findIndex(item => item.element === note);
           if (index > -1) activeNotes.splice(index, 1);
 
@@ -409,14 +417,14 @@
     }
 
     window.onload = function() {
+      // Lắng nghe sự kiện thêm mới tin nhắn
       db.ref('notes').on('child_added', function(snapshot) {
         const data = snapshot.val();
         if (data && data.text) {
-          createBouncingNote(data.text, data.timestamp, data.duration);
+          createBouncingNote(data.text, data.timestamp, data.duration, snapshot.key);
         }
       });
     };
   </script>
 </body>
-    </html>
-  
+</html>
