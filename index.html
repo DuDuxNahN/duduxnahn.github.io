@@ -1,356 +1,198 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#FFD9E0">
-<meta name="mobile-web-app-capable" content="yes">
-<title>Bubu & Dudu – Việc hôm nay</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&display=swap');
-:root{
-  --bg:#FFF0F2; --card:#FFFFFF; --ink:#4A3430; --soft:#9C7F78;
-  --pink:#F48CA0; --pink-l:#FFD9E0; --mint:#BDE6D0; --butter:#FFE29A; --brown:#C48A5A;
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0}
-body{
-  font-family:'Nunito','Baloo 2',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-  background:var(--bg);color:var(--ink);min-height:100dvh;
-}
-.app{max-width:480px;margin:0 auto;padding:0 16px 120px}
-button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
-button:focus-visible,input:focus-visible{outline:3px solid var(--brown);outline-offset:2px}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bubu & Dudu Hugs 🐾</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #fceade;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
 
-/* Header */
-.hero{
-  background:var(--pink-l);margin:0 -16px;padding:calc(env(safe-area-inset-top) + 14px) 16px 18px;
-  border-radius:0 0 32px 32px;
-}
-.datebar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.datebar .mid{text-align:center;line-height:1.15}
-.datebar .big{font-size:22px;font-weight:800}
-.datebar .sub{font-size:13px;color:var(--soft);font-weight:700}
-.arrow{width:40px;height:40px;border-radius:50%;background:#fff;font-size:22px;font-weight:800;display:grid;place-items:center}
-.stage{display:flex;align-items:flex-end;gap:6px}
-.stage svg{width:88px;height:79px;flex:none}
-.bubble{
-  flex:1;background:#fff;border-radius:20px;padding:10px 12px;font-weight:700;font-size:14px;
-  line-height:1.3;text-align:center;position:relative;margin-bottom:22px;min-height:52px;
-  display:grid;place-items:center;
-}
-.progress{margin-top:6px}
-.progress .row{display:flex;justify-content:space-between;font-size:13px;font-weight:800;margin-bottom:6px}
-.track{height:14px;background:#fff;border-radius:99px;overflow:hidden}
-.fill{height:100%;background:var(--pink);border-radius:99px;transition:width .35s ease}
+    /* Container hiệu ứng chính */
+    .scene-container {
+      text-align: center;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 30px;
+      border-radius: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      border: 3px solid #f4a261;
+      max-width: 90%;
+      width: 380px;
+    }
 
-/* List */
-h3.sec{font-size:15px;margin:22px 4px 8px;font-weight:800}
-h3.sec.late{color:#C0485F}
-ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-.item{
-  display:flex;align-items:center;gap:12px;background:var(--card);
-  border-radius:20px;padding:12px 8px 12px 12px;
-}
-.chk{
-  width:32px;height:32px;border-radius:50%;border:3px solid var(--brown);flex:none;
-  display:grid;place-items:center;font-size:17px;font-weight:800;color:transparent;background:#fff;
-  transition:background .15s, transform .15s;
-}
-.chk[aria-pressed="true"]{background:var(--mint);color:var(--ink);border-color:#7DC4A0}
-.chk:active{transform:scale(.88)}
-.body{flex:1;min-width:0}
-.title{font-weight:800;font-size:16px;overflow-wrap:anywhere}
-.meta{display:flex;gap:8px;align-items:center;margin-top:4px;font-size:12px;font-weight:700;color:var(--soft)}
-.chip{padding:2px 9px;border-radius:99px;background:var(--butter);color:var(--ink)}
-.chip.once{background:var(--pink-l)}
-.item.done .title{text-decoration:line-through;color:var(--soft)}
-.item.done{opacity:.7}
-.del{width:40px;height:40px;border-radius:50%;font-size:22px;color:var(--soft)}
-.empty{
-  text-align:center;padding:34px 20px;color:var(--soft);font-weight:700;line-height:1.5;
-}
+    .gif-box {
+      width: 220px;
+      height: 220px;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-/* Add button */
-.fab{
-  position:fixed;right:max(18px, calc(50% - 222px));bottom:calc(env(safe-area-inset-bottom) + 20px);
-  height:60px;padding:0 24px 0 18px;border-radius:99px;background:var(--brown);color:#fff;
-  font-weight:800;font-size:16px;display:flex;align-items:center;gap:8px;
-  box-shadow:0 6px 0 #9E6B40;
-}
-.fab:active{transform:translateY(3px);box-shadow:0 3px 0 #9E6B40}
-.fab span{font-size:28px;line-height:1;margin-top:-3px}
+    .gif-box img {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 16px;
+      object-fit: contain;
+    }
 
-/* Sheet */
-.sheet{position:fixed;inset:0;background:rgba(74,52,48,.4);display:flex;align-items:flex-end;justify-content:center;z-index:10}
-.sheet[hidden]{display:none}
-.panel{
-  width:100%;max-width:480px;background:#fff;border-radius:28px 28px 0 0;
-  padding:20px 18px calc(env(safe-area-inset-bottom) + 18px);
-  animation:up .22s ease-out;
-}
-@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
-.panel h2{margin:0 0 14px;font-size:20px}
-.panel label{display:block;font-size:13px;font-weight:800;color:var(--soft);margin-top:14px}
-.panel input[type=text],.panel input[type=time],.panel input[type=date]{
-  width:100%;margin-top:6px;font:inherit;font-size:16px;font-weight:700;color:var(--ink);
-  background:var(--bg);border:2px solid transparent;border-radius:16px;padding:12px 14px;
-}
-.panel input:focus{border-color:var(--pink);outline:none}
-.seg{display:flex;background:var(--bg);border-radius:16px;padding:4px;margin-top:14px}
-.seg button{flex:1;padding:10px;border-radius:12px;font-weight:800;color:var(--soft)}
-.seg button.on{background:#fff;color:var(--ink);box-shadow:0 2px 0 var(--pink-l)}
-.primary{
-  width:100%;margin-top:20px;padding:15px;border-radius:18px;background:var(--pink);
-  color:#fff;font-weight:800;font-size:17px;box-shadow:0 5px 0 #D4687F;
-}
-.primary:active{transform:translateY(3px);box-shadow:0 2px 0 #D4687F}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style>
+    /* Nút bấm chính */
+    .btn-action {
+      background-color: #e76f51;
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(231, 111, 81, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .btn-action:active {
+      transform: scale(0.95);
+    }
+
+    /* Ô nhập lời nhắn (Khóa ban đầu) */
+    .message-form {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 15px;
+      animation: fadeIn 0.8s ease;
+    }
+
+    .message-input {
+      padding: 12px 16px;
+      border: 2px solid #f4a261;
+      border-radius: 12px;
+      outline: none;
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    /* Tin nhắn bay lơ lửng */
+    .floating-note {
+      position: absolute;
+      background: #ffffff;
+      color: #e76f51;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 0.95rem;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      border: 2px solid #f4a261;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 1;
+      animation: floatAround 12s infinite ease-in-out alternate;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes floatAround {
+      0% { transform: translate(0, 0) rotate(-5deg); }
+      25% { transform: translate(60px, -80px) rotate(5deg); }
+      50% { transform: translate(-50px, 100px) rotate(-3deg); }
+      75% { transform: translate(80px, 50px) rotate(4deg); }
+      100% { transform: translate(-70px, -60px) rotate(-5deg); }
+    }
+  </style>
 </head>
 <body>
-<div class="app">
-  <header class="hero">
-    <div class="datebar">
-      <button class="arrow" id="prev" aria-label="Ngày trước">‹</button>
-      <button class="mid" id="goToday" aria-label="Về hôm nay">
-        <div class="big" id="dateLabel"></div>
-        <div class="sub" id="dateSub"></div>
-      </button>
-      <button class="arrow" id="next" aria-label="Ngày sau">›</button>
-    </div>
-    <div class="stage">
-      <div id="bubu"></div>
-      <div class="bubble" id="bubble"></div>
-      <div id="dudu"></div>
-    </div>
-    <div class="progress">
-      <div class="row"><span id="progText"></span><span id="progPct"></span></div>
-      <div class="track"><div class="fill" id="fill" style="width:0%"></div></div>
-    </div>
-  </header>
 
-  <main id="main"></main>
-</div>
-
-<button class="fab" id="add"><span>+</span> Thêm việc</button>
-
-<div class="sheet" id="sheet" hidden>
-  <div class="panel" role="dialog" aria-labelledby="sheetTitle">
-    <h2 id="sheetTitle">Việc mới</h2>
-    <input type="text" id="fTitle" placeholder="Hôm nay cần làm gì nè?" maxlength="80" autocomplete="off" aria-label="Tên việc">
-    <label>Giờ (không bắt buộc)
-      <input type="time" id="fTime">
-    </label>
-    <div class="seg" id="seg">
-      <button type="button" data-r="daily" class="on">Mỗi ngày</button>
-      <button type="button" data-r="once">Một lần</button>
+  <div class="scene-container">
+    <div class="gif-box">
+      <!-- GIF ban đầu: Dudu và Bubu vẫy tay -->
+      <img id="bubuGif" src="https://media.tenor.com/J332S3sHlhUAAAAC/bubu-dudu-bubu.gif" alt="Bubu Dudu">
     </div>
-    <label id="dateRow" hidden>Làm vào ngày
-      <input type="date" id="fDate">
-    </label>
-    <button class="primary" id="save">Thêm việc</button>
+
+    <button id="hugBtn" class="btn-action" onclick="startHug()">Ấn để Dudu ôm Bubu 🐾</button>
+
+    <!-- Ô gửi lời nhắn -->
+    <div id="messageForm" class="message-form">
+      <input type="text" id="noteInput" class="message-input" placeholder="Để lại lời nhắn yêu thương..." maxlength="50">
+      <button class="btn-action" style="background-color: #2a9d8f;" onclick="saveNote()">Gửi lời nhắn ✨</button>
+    </div>
   </div>
-</div>
 
-<script>
-/* ---------- Lưu trữ (tự lưu trên máy; nếu trình duyệt chặn thì giữ tạm trong bộ nhớ) ---------- */
-const KEY = 'bubu-dudu-todos-v1';
-let memStore = null;
-function load(){
-  try { const r = localStorage.getItem(KEY); return r ? JSON.parse(r) : []; }
-  catch(e){ return memStore || []; }
-}
-function save(){
-  try { localStorage.setItem(KEY, JSON.stringify(tasks)); }
-  catch(e){ memStore = tasks; }
-}
+  <script>
+    // 1. Hàm kích hoạt cảnh Dudu chạy tới ôm Bubu
+    function startHug() {
+      const gifImg = document.getElementById('bubuGif');
+      const hugBtn = document.getElementById('hugBtn');
+      const messageForm = document.getElementById('messageForm');
 
-/* ---------- Tiện ích ngày ---------- */
-const pad = n => String(n).padStart(2,'0');
-const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const parse = s => new Date(s + 'T00:00:00');
-const addDays = (s,n) => { const d = parse(s); d.setDate(d.getDate()+n); return ymd(d); };
-const WD = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
-const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const $ = id => document.getElementById(id);
+      // Đổi sang GIF Dudu chạy tới ôm Bubu ấm áp
+      gifImg.src = "https://media.tenor.com/2X88v6E1E4AAAAAC/bubu-dudu-hug.gif";
+      
+      // Ẩn nút ôm và hiện ô nhập lời nhắn
+      hugBtn.style.display = 'none';
+      setTimeout(() => {
+        messageForm.style.display = 'flex';
+      }, 600);
+    }
 
-/* ---------- Bubu & Dudu ---------- */
-function bear(kind, happy){
-  const dudu = kind === 'dudu';
-  const face = dudu ? '#C48A5A' : '#FFFFFF';
-  const ear  = dudu ? '#C48A5A' : '#2E2A33';
-  const earIn= dudu ? '#E8B58C' : '#4A4450';
-  const line = '#4A3430';
-  const mouth = happy
-    ? '<path d="M42 67 Q50 77 58 67 Z" fill="#E8657C" stroke="'+line+'" stroke-width="2" stroke-linejoin="round"/>'
-    : '<path d="M44 68 Q50 72 56 68" fill="none" stroke="'+line+'" stroke-width="2.4" stroke-linecap="round"/>';
-  const eyes = dudu
-    ? `<circle cx="35" cy="50" r="4" fill="${line}"/><circle cx="65" cy="50" r="4" fill="${line}"/>
-       <circle cx="36.3" cy="48.7" r="1.3" fill="#fff"/><circle cx="66.3" cy="48.7" r="1.3" fill="#fff"/>`
-    : `<ellipse cx="34" cy="51" rx="9" ry="11.5" transform="rotate(18 34 51)" fill="#2E2A33"/>
-       <ellipse cx="66" cy="51" rx="9" ry="11.5" transform="rotate(-18 66 51)" fill="#2E2A33"/>
-       <circle cx="35" cy="49" r="3.6" fill="#fff"/><circle cx="65" cy="49" r="3.6" fill="#fff"/>
-       <circle cx="35.6" cy="49.4" r="1.8" fill="#2E2A33"/><circle cx="64.4" cy="49.4" r="1.8" fill="#2E2A33"/>`;
-  const muzzle = dudu ? '<ellipse cx="50" cy="66" rx="15" ry="11" fill="#F3D3B0"/>' : '';
-  const extra = dudu
-    ? ''
-    : '<path d="M72 14 l4 -6 l4 6 z M72 14 q4 -3 4 -6 q0 3 4 6" fill="none"/><path d="M80 16 c-3 -5 -9 -2 -6 2 c1.5 2 6 5 6 5 s4.500 -3 6 -5 c3 -4 -3 -7 -6 -2z" fill="#F48CA0" transform="translate(-4 -6) scale(.8)"/>';
-  return `<svg viewBox="0 0 100 90" role="img" aria-label="${dudu?'Dudu':'Bubu'}">
-    <circle cx="22" cy="24" r="14" fill="${ear}" stroke="${line}" stroke-width="2.5"/>
-    <circle cx="22" cy="24" r="6.5" fill="${earIn}"/>
-    <circle cx="78" cy="24" r="14" fill="${ear}" stroke="${line}" stroke-width="2.5"/>
-    <circle cx="78" cy="24" r="6.5" fill="${earIn}"/>
-    <ellipse cx="50" cy="53" rx="41" ry="34" fill="${face}" stroke="${line}" stroke-width="2.5"/>
-    ${muzzle}${eyes}
-    <circle cx="23" cy="64" r="5.5" fill="#FF9FB0" opacity=".75"/>
-    <circle cx="77" cy="64" r="5.5" fill="#FF9FB0" opacity=".75"/>
-    <ellipse cx="50" cy="60" rx="5.5" ry="4" fill="${line}"/>
-    ${mouth}${extra}
-  </svg>`;
-}
+    // 2. Hàm lưu lời nhắn và tạo hiệu ứng bay
+    function saveNote() {
+      const input = document.getElementById('noteInput');
+      const text = input.value.trim();
 
-/* ---------- Dữ liệu ---------- */
-let tasks = load();
-const todayStr = () => ymd(new Date());
-let sel = todayStr();
-let repeat = 'daily';
+      if (text !== "") {
+        let notes = JSON.parse(localStorage.getItem('bubu_notes')) || [];
+        notes.push(text);
+        localStorage.setItem('bubu_notes', JSON.stringify(notes));
 
-const appliesOn = (t, d) => t.repeat === 'daily' ? d >= t.created : t.date === d;
-const isDone = (t, d) => t.done.includes(d);
-const timeKey = t => t.time || '99:99';
+        // Tạo phần tử tin nhắn bay ngay lập tức
+        createFloatingNote(text);
+        input.value = '';
+      }
+    }
 
-/* ---------- Hiển thị ---------- */
-function itemHTML(t, dateKey){
-  const done = isDone(t, dateKey);
-  return `<li class="item ${done?'done':''}">
-    <button class="chk" data-act="toggle" data-id="${t.id}" data-date="${dateKey}" aria-pressed="${done}" aria-label="Đánh dấu xong: ${esc(t.title)}">✓</button>
-    <div class="body">
-      <div class="title">${esc(t.title)}</div>
-      <div class="meta">
-        <span class="chip ${t.repeat==='once'?'once':''}">${t.repeat==='daily'?'Mỗi ngày':'Một lần'}</span>
-        ${t.time ? `<span>⏰ ${t.time}</span>` : ''}
-        ${dateKey !== sel ? `<span>${parse(dateKey).getDate()}/${parse(dateKey).getMonth()+1}</span>` : ''}
-      </div>
-    </div>
-    <button class="del" data-act="del" data-id="${t.id}" aria-label="Xoá: ${esc(t.title)}">×</button>
-  </li>`;
-}
+    // 3. Hàm tạo một tin nhắn bay lơ lửng ngẫu nhiên trên màn hình
+    function createFloatingNote(text) {
+      const note = document.createElement('div');
+      note.className = 'floating-note';
+      note.innerText = '💌 ' + text;
 
-function render(){
-  const today = todayStr();
-  const d = parse(sel);
-  $('dateLabel').textContent = sel === today ? 'Hôm nay' : (sel === addDays(today,1) ? 'Ngày mai' : (sel === addDays(today,-1) ? 'Hôm qua' : WD[d.getDay()]));
-  $('dateSub').textContent = `${WD[d.getDay()]}, ${pad(d.getDate())}/${pad(d.getMonth()+1)}`;
+      // Vị trí ngẫu nhiên trên màn hình
+      const randomTop = Math.floor(Math.random() * (window.innerHeight - 100)) + 20;
+      const randomLeft = Math.floor(Math.random() * (window.innerWidth - 150)) + 20;
+      const randomDuration = Math.floor(Math.random() * 6) + 8; // Từ 8s - 14s
 
-  const list = tasks.filter(t => appliesOn(t, sel))
-    .sort((a,b) => (isDone(a,sel) - isDone(b,sel)) || timeKey(a).localeCompare(timeKey(b)));
-  const overdue = sel === today
-    ? tasks.filter(t => t.repeat === 'once' && t.date < today && !t.done.length).sort((a,b)=>a.date.localeCompare(b.date))
-    : [];
+      note.style.top = randomTop + 'px';
+      note.style.left = randomLeft + 'px';
+      note.style.animationDuration = randomDuration + 's';
 
-  const total = list.length;
-  const doneCount = list.filter(t => isDone(t, sel)).length;
-  const pct = total ? Math.round(doneCount / total * 100) : 0;
-  $('fill').style.width = pct + '%';
-  $('progText').textContent = total ? `Xong ${doneCount}/${total} việc` : 'Chưa có việc nào';
-  $('progPct').textContent = total ? pct + '%' : '';
+      document.body.appendChild(note);
+    }
 
-  let msg;
-  if (!total) msg = 'Hôm nay rảnh rỗi! Thêm việc đầu tiên nhé 🐼';
-  else if (pct === 100) msg = 'Giỏi quá! Xong hết rồi 🎉';
-  else if (pct >= 50) msg = 'Sắp xong rồi, cố lên nè!';
-  else if (pct > 0) msg = 'Khởi đầu tốt lắm! Tiếp tục nào 💪';
-  else msg = 'Cùng bắt đầu thôi nào!';
-  $('bubble').textContent = msg;
-  const happy = total > 0 && pct >= 50;
-  $('bubu').innerHTML = bear('bubu', happy || !total);
-  $('dudu').innerHTML = bear('dudu', happy || !total);
-
-  let html = '';
-  if (overdue.length) {
-    html += `<h3 class="sec late">Việc quá hạn</h3><ul>${overdue.map(t => itemHTML(t, t.date)).join('')}</ul>`;
-  }
-  if (list.length) {
-    html += `<h3 class="sec">${sel === today ? 'Việc hôm nay' : 'Việc trong ngày'}</h3><ul>${list.map(t => itemHTML(t, sel)).join('')}</ul>`;
-  } else if (!overdue.length) {
-    html += `<div class="empty">Chưa có việc nào cho ngày này.<br>Nhấn “Thêm việc” để bắt đầu.</div>`;
-  }
-  $('main').innerHTML = html;
-}
-
-/* ---------- Thao tác ---------- */
-$('main').addEventListener('click', e => {
-  const b = e.target.closest('button[data-act]');
-  if (!b) return;
-  const t = tasks.find(x => x.id === b.dataset.id);
-  if (!t) return;
-  if (b.dataset.act === 'toggle') {
-    const date = b.dataset.date;
-    const i = t.done.indexOf(date);
-    if (i >= 0) t.done.splice(i,1); else t.done.push(date);
-    save(); render();
-  } else if (b.dataset.act === 'del') {
-    const msg = t.repeat === 'daily'
-      ? `Xoá “${t.title}” khỏi tất cả các ngày?`
-      : `Xoá “${t.title}”?`;
-    if (confirm(msg)) { tasks = tasks.filter(x => x.id !== t.id); save(); render(); }
-  }
-});
-
-$('prev').onclick = () => { sel = addDays(sel,-1); render(); };
-$('next').onclick = () => { sel = addDays(sel,1); render(); };
-$('goToday').onclick = () => { sel = todayStr(); render(); };
-
-/* ---------- Form thêm việc ---------- */
-function setRepeat(r){
-  repeat = r;
-  document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', b.dataset.r === r));
-  $('dateRow').hidden = r !== 'once';
-}
-$('seg').addEventListener('click', e => {
-  const b = e.target.closest('button[data-r]');
-  if (b) setRepeat(b.dataset.r);
-});
-function openSheet(){
-  $('fTitle').value = ''; $('fTime').value = ''; $('fDate').value = sel;
-  setRepeat('daily');
-  $('sheet').hidden = false;
-  setTimeout(() => $('fTitle').focus(), 50);
-}
-function closeSheet(){ $('sheet').hidden = true; }
-$('add').onclick = openSheet;
-$('sheet').addEventListener('click', e => { if (e.target === $('sheet')) closeSheet(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
-
-function submit(){
-  const title = $('fTitle').value.trim();
-  if (!title) { $('fTitle').focus(); $('fTitle').placeholder = 'Nhập tên việc trước nhé'; return; }
-  const date = $('fDate').value || sel;
-  tasks.push({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-    title,
-    time: $('fTime').value || '',
-    repeat,
-    date: repeat === 'once' ? date : '',
-    created: repeat === 'daily' ? sel : date,
-    done: []
-  });
-  save();
-  if (repeat === 'once') sel = date;
-  closeSheet(); render();
-}
-$('save').onclick = submit;
-$('fTitle').addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
-
-/* Tự cập nhật khi sang ngày mới */
-let lastToday = todayStr();
-setInterval(() => {
-  const t = todayStr();
-  if (t !== lastToday) { if (sel === lastToday) sel = t; lastToday = t; render(); }
-}, 60000);
-
-render();
-</script>
+    // 4. Khi tải/vào lại trang: Hiển thị lại tất cả lời nhắn cũ bay trên màn hình
+    window.onload = function() {
+      let notes = JSON.parse(localStorage.getItem('bubu_notes')) || [];
+      notes.forEach(text => {
+        createFloatingNote(text);
+      });
+    };
+  </script>
 </body>
 </html>
