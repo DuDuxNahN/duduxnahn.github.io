@@ -35,19 +35,19 @@
     }
 
     .gif-box {
-      width: 200px;
-      height: 200px;
-      margin: 0 auto 20px;
+      width: 220px;
+      height: 220px;
+      margin: 0 auto 15px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .gif-box img {
-      max-width: 100%;
-      max-height: 100%;
+      width: 100%;
+      height: 100%;
       border-radius: 16px;
-      object-fit: contain;
+      object-fit: cover;
     }
 
     .btn-action {
@@ -124,7 +124,7 @@
 
   <div class="scene-container">
     <div class="gif-box">
-      <img id="bubuGif" src="bubu1.gif" alt="Bubu Dudu">
+      <img id="bubuGif" src="bubu1.gif" alt="">
     </div>
 
     <button id="hugBtn" class="btn-action" onclick="startHug()">Ấn để Dudu ôm Bubu 🐾</button>
@@ -136,7 +136,7 @@
   </div>
 
   <script>
-    // Cấu hình Firebase đã điền sẵn cho bạn
+    // Cấu hình Firebase của bạn
     const firebaseConfig = {
       apiKey: "AIzaSyABW8qlALzqJXB5GYReEz2gMFmIMHzHXBM",
       authDomain: "budu-note.firebaseapp.com",
