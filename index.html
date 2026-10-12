@@ -17,27 +17,30 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       overflow: hidden;
       position: relative;
     }
 
     .scene-container {
       text-align: center;
-      z-index: 1;
+      z-index: 20;
       background: rgba(255, 255, 255, 0.95);
-      padding: 25px;
-      border-radius: 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 18px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
       border: 3px solid #f4a261;
-      max-width: 90%;
-      width: 380px;
+      width: 320px;
+      position: absolute;
+      top: 62%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
 
     .gif-box {
-      width: 220px;
-      height: 220px;
-      margin: 0 auto 15px;
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -46,7 +49,7 @@
     .gif-box img {
       width: 100%;
       height: 100%;
-      border-radius: 16px;
+      border-radius: 12px;
       object-fit: cover;
     }
 
@@ -54,12 +57,12 @@
       background-color: #e76f51;
       color: white;
       border: none;
-      padding: 14px 28px;
-      font-size: 1.1rem;
+      padding: 10px 20px;
+      font-size: 0.95rem;
       font-weight: bold;
       border-radius: 50px;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(231, 111, 81, 0.4);
+      box-shadow: 0 4px 12px rgba(231, 111, 81, 0.4);
       width: 100%;
       transition: 0.2s;
     }
@@ -71,44 +74,47 @@
     .message-form {
       display: none;
       flex-direction: column;
-      gap: 12px;
-      margin-top: 15px;
-      animation: fadeIn 0.8s ease;
+      gap: 10px;
+      margin-top: 10px;
+      animation: fadeIn 0.5s ease;
     }
 
     .message-input {
-      padding: 12px 16px;
+      padding: 10px 14px;
       border: 2px solid #f4a261;
-      border-radius: 12px;
+      border-radius: 10px;
       outline: none;
-      font-size: 1rem;
+      font-size: 0.9rem;
       text-align: center;
       width: 100%;
     }
 
-    /* Khung lời nhắn di chuyển và nảy quanh màn hình */
+    /* Khung lời nhắn nảy tự do, có viền hiệu ứng thời gian còn lại */
     .floating-note {
       position: absolute;
-      padding: 10px 18px;
-      border-radius: 20px;
+      padding: 8px 14px;
+      border-radius: 16px;
       font-weight: bold;
-      font-size: 0.95rem;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+      font-size: 0.85rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
       pointer-events: none;
       white-space: nowrap;
       z-index: 10;
+      transition: opacity 0.5s ease;
+      border-width: 3px;
+      border-style: solid;
     }
 
-    /* 6 kiểu khung chữ với màu sắc khác nhau */
-    .style-1 { background: #fff0f3; color: #ff4d6d; border: 2px solid #ff758c; }
-    .style-2 { background: #e8f4f8; color: #1d3557; border: 2px solid #457b9d; }
-    .style-3 { background: #fefae0; color: #bc6c25; border: 2px solid #dda15e; }
-    .style-4 { background: #f3c4fb; color: #7209b7; border: 2px solid #b5179e; }
-    .style-5 { background: #e2f0cb; color: #386641; border: 2px solid #6a994e; }
-    .style-6 { background: #ffccd5; color: #c9184a; border: 2px solid #ff758c; }
+    /* 6 kiểu khung chữ với màu sắc và hiệu ứng viền đếm ngược thời gian */
+    .style-1 { background: #fff0f3; color: #ff4d6d; border-color: #ff758c; }
+    .style-2 { background: #e8f4f8; color: #1d3557; border-color: #457b9d; }
+    .style-3 { background: #fefae0; color: #bc6c25; border-color: #dda15e; }
+    .style-4 { background: #f3c4fb; color: #7209b7; border-color: #b5179e; }
+    .style-5 { background: #e2f0cb; color: #386641; border-color: #6a994e; }
+    .style-6 { background: #ffccd5; color: #c9184a; border-color: #ff758c; }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
+      from { opacity: 0; transform: translateY(5px); }
       to { opacity: 1; transform: translateY(0); }
     }
   </style>
@@ -163,51 +169,105 @@
       const text = input.value.trim();
 
       if (text !== "") {
+        // Lưu kèm thời gian tạo (timestamp) lên Firebase
         db.ref('notes').push({
-          text: text
+          text: text,
+          timestamp: Date.now()
         });
         input.value = '';
       }
     }
 
-    // Hàm tạo và điều khiển hiệu ứng nảy quanh màn hình
-    function createBouncingNote(text) {
+    // Hàm tạo lời nhắn nảy, hiển thị mặc định 2 giờ (tối đa 24 giờ), có viền báo hiệu thời gian còn lại
+    function createBouncingNote(text, timestamp) {
       const note = document.createElement('div');
       
-      // Chọn ngẫu nhiên kiểu màu sắc từ style-1 đến style-6
       const randomStyleNum = Math.floor(Math.random() * 6) + 1;
       note.className = `floating-note style-${randomStyleNum}`;
       note.innerText = '💌 ' + text;
       document.body.appendChild(note);
 
-      // Vị trí xuất phát ngẫu nhiên
-      let posX = Math.random() * (window.innerWidth - 150);
-      let posY = Math.random() * (window.innerHeight - 100);
+      // CÀI ĐẶT THỜI GIAN SỐNG CỦA LỜI NHẮN
+      // Mặc định: 2 giờ = 2 * 60 * 60 * 1000 ms. Tối đa cho phép cấu hình đến 24 giờ.
+      const DEFAULT_HOURS = 2; 
+      const MAX_HOURS = 24;
+      const hoursToLive = Math.min(DEFAULT_HOURS, MAX_HOURS); 
+      const TOTAL_LIFETIME = hoursToLive * 60 * 60 * 1000; 
 
-      // Tốc độ và hướng di chuyển ngẫu nhiên (Vận tốc X và Y)
-      let speedX = (Math.random() - 0.5) * 3;
-      let speedY = (Math.random() - 0.5) * 3;
-      if (Math.abs(speedX) < 1) speedX = 1.5;
-      if (Math.abs(speedY) < 1) speedY = 1.5;
+      // Nếu tin nhắn cũ đã lưu trên Firebase, tính toán thời gian còn lại chính xác
+      const now = Date.now();
+      const msgTime = timestamp || now;
+      let elapsedTime = now - msgTime;
+      let remainingTime = TOTAL_LIFETIME - elapsedTime;
+
+      if (remainingTime <= 0) {
+        note.remove();
+        return;
+      }
+
+      // Cập nhật trạng thái viền và tự động xóa khi hết giờ
+      const timerInterval = setInterval(() => {
+        const currentElapsed = Date.now() - msgTime;
+        const currentRemaining = TOTAL_LIFETIME - currentElapsed;
+
+        if (currentRemaining <= 0) {
+          clearInterval(timerInterval);
+          note.style.opacity = '0';
+          setTimeout(() => note.remove(), 500);
+        } else {
+          // Hiệu ứng viền ngoài mờ dần hoặc thay đổi độ đậm nhạt báo hiệu thời gian sắp hết
+          const ratio = currentRemaining / TOTAL_LIFETIME;
+          note.style.opacity = Math.max(0.4, ratio); // Sắp hết giờ sẽ hơi mờ dần đi báo hiệu
+        }
+      }, 1000);
+
+      // Vị trí xuất phát ngẫu nhiên
+      let posX = Math.random() * (window.innerWidth - 120);
+      let posY = Math.random() * (window.innerHeight - 80);
+
+      let speedX = (Math.random() - 0.5) * 2.5;
+      let speedY = (Math.random() - 0.5) * 2.5;
+      if (Math.abs(speedX) < 1) speedX = 1.2;
+      if (Math.abs(speedY) < 1) speedY = 1.2;
 
       function updatePosition() {
         const rect = note.getBoundingClientRect();
+        const container = document.querySelector('.scene-container').getBoundingClientRect();
+        
         const maxX = window.innerWidth - rect.width;
         const maxY = window.innerHeight - rect.height;
 
         posX += speedX;
         posY += speedY;
 
-        // Chạm cạnh trái hoặc phải thì đổi hướng (nảy lại)
+        // Va chạm cạnh màn hình
         if (posX <= 0 || posX >= maxX) {
           speedX *= -1;
           posX = Math.max(0, Math.min(posX, maxX));
         }
-
-        // Chạm cạnh trên hoặc dưới thì đổi hướng (nảy lại)
         if (posY <= 0 || posY >= maxY) {
           speedY *= -1;
           posY = Math.max(0, Math.min(posY, maxY));
+        }
+
+        // Va chạm khung chat trung tâm
+        const nextRect = {
+          left: posX,
+          top: posY,
+          right: posX + rect.width,
+          bottom: posY + rect.height
+        };
+
+        if (
+          nextRect.right > container.left &&
+          nextRect.left < container.right &&
+          nextRect.bottom > container.top &&
+          nextRect.top < container.bottom
+        ) {
+          speedX *= -1;
+          speedY *= -1;
+          posX += speedX * 2;
+          posY += speedY * 2;
         }
 
         note.style.left = posX + 'px';
@@ -224,10 +284,11 @@
       db.ref('notes').on('child_added', function(snapshot) {
         const data = snapshot.val();
         if (data && data.text) {
-          createBouncingNote(data.text);
+          createBouncingNote(data.text, data.timestamp);
         }
       });
     };
   </script>
 </body>
-</html>
+  </html>
+  
