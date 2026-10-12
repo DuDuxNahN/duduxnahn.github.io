@@ -26,7 +26,7 @@
       text-align: center;
       z-index: 20;
       background: rgba(255, 255, 255, 0.95);
-      padding: 18px;
+      padding: 16px;
       border-radius: 20px;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
       border: 3px solid #f4a261;
@@ -38,9 +38,9 @@
     }
 
     .gif-box {
-      width: 150px;
-      height: 150px;
-      margin: 0 auto 10px;
+      width: 140px;
+      height: 140px;
+      margin: 0 auto 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -74,13 +74,13 @@
     .message-form {
       display: none;
       flex-direction: column;
-      gap: 10px;
-      margin-top: 10px;
+      gap: 8px;
+      margin-top: 8px;
       animation: fadeIn 0.5s ease;
     }
 
     .message-input {
-      padding: 10px 14px;
+      padding: 8px 12px;
       border: 2px solid #f4a261;
       border-radius: 10px;
       outline: none;
@@ -89,7 +89,20 @@
       width: 100%;
     }
 
-    /* Khung lời nhắn nảy tự do, có viền hiệu ứng thời gian còn lại */
+    .time-select {
+      padding: 6px 10px;
+      border: 2px solid #f4a261;
+      border-radius: 10px;
+      outline: none;
+      font-size: 0.85rem;
+      background: #fff;
+      color: #e76f51;
+      font-weight: bold;
+      text-align: center;
+      width: 100%;
+    }
+
+    /* Khung lời nhắn nảy tự do, có viền hiệu ứng thời gian */
     .floating-note {
       position: absolute;
       padding: 8px 14px;
@@ -105,7 +118,7 @@
       border-style: solid;
     }
 
-    /* 6 kiểu khung chữ với màu sắc và hiệu ứng viền đếm ngược thời gian */
+    /* 6 kiểu khung chữ với màu sắc khác nhau */
     .style-1 { background: #fff0f3; color: #ff4d6d; border-color: #ff758c; }
     .style-2 { background: #e8f4f8; color: #1d3557; border-color: #457b9d; }
     .style-3 { background: #fefae0; color: #bc6c25; border-color: #dda15e; }
@@ -134,6 +147,21 @@
 
     <div id="messageForm" class="message-form">
       <input type="text" id="noteInput" class="message-input" placeholder="Để lại lời nhắn chung..." maxlength="50">
+      
+      <!-- Khung chọn thời gian tồn tại của lời nhắn -->
+      <select id="timeSelect" class="time-select">
+        <option value="60">Thời gian tồn tại: 60 giây</option>
+        <option value="300">Thời gian tồn tại: 5 phút</option>
+        <option value="600">Thời gian tồn tại: 10 phút</option>
+        <option value="900">Thời gian tồn tại: 15 phút</option>
+        <option value="1800">Thời gian tồn tại: 30 phút</option>
+        <option value="3600">Thời gian tồn tại: 1 giờ</option>
+        <option value="7200" selected>Thời gian tồn tại: 2 giờ (Mặc định)</option>
+        <option value="18000">Thời gian tồn tại: 5 giờ</option>
+        <option value="21600">Thời gian tồn tại: 6 giờ</option>
+        <option value="28800">Thời gian tồn tại: 8 giờ</option>
+      </select>
+
       <button class="btn-action" style="background-color: #2a9d8f;" onclick="saveNote()">Gửi lời nhắn ✨</button>
     </div>
   </div>
@@ -166,20 +194,22 @@
 
     function saveNote() {
       const input = document.getElementById('noteInput');
+      const timeSelect = document.getElementById('timeSelect');
       const text = input.value.trim();
+      const durationSeconds = parseInt(timeSelect.value);
 
       if (text !== "") {
-        // Lưu kèm thời gian tạo (timestamp) lên Firebase
         db.ref('notes').push({
           text: text,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          duration: durationSeconds * 1000 // Chuyển sang mili-giây
         });
         input.value = '';
       }
     }
 
-    // Hàm tạo lời nhắn nảy, hiển thị mặc định 2 giờ (tối đa 24 giờ), có viền báo hiệu thời gian còn lại
-    function createBouncingNote(text, timestamp) {
+    // Hàm tạo lời nhắn nảy, chống kẹt, tự động biến mất theo thời gian đã chọn
+    function createBouncingNote(text, timestamp, duration) {
       const note = document.createElement('div');
       
       const randomStyleNum = Math.floor(Math.random() * 6) + 1;
@@ -187,14 +217,7 @@
       note.innerText = '💌 ' + text;
       document.body.appendChild(note);
 
-      // CÀI ĐẶT THỜI GIAN SỐNG CỦA LỜI NHẮN
-      // Mặc định: 2 giờ = 2 * 60 * 60 * 1000 ms. Tối đa cho phép cấu hình đến 24 giờ.
-      const DEFAULT_HOURS = 2; 
-      const MAX_HOURS = 24;
-      const hoursToLive = Math.min(DEFAULT_HOURS, MAX_HOURS); 
-      const TOTAL_LIFETIME = hoursToLive * 60 * 60 * 1000; 
-
-      // Nếu tin nhắn cũ đã lưu trên Firebase, tính toán thời gian còn lại chính xác
+      const TOTAL_LIFETIME = duration || (2 * 3600 * 1000); // Mặc định 2 tiếng nếu không có dữ liệu cũ
       const now = Date.now();
       const msgTime = timestamp || now;
       let elapsedTime = now - msgTime;
@@ -205,7 +228,7 @@
         return;
       }
 
-      // Cập nhật trạng thái viền và tự động xóa khi hết giờ
+      // Đếm ngược thời gian xóa tin nhắn
       const timerInterval = setInterval(() => {
         const currentElapsed = Date.now() - msgTime;
         const currentRemaining = TOTAL_LIFETIME - currentElapsed;
@@ -215,15 +238,26 @@
           note.style.opacity = '0';
           setTimeout(() => note.remove(), 500);
         } else {
-          // Hiệu ứng viền ngoài mờ dần hoặc thay đổi độ đậm nhạt báo hiệu thời gian sắp hết
           const ratio = currentRemaining / TOTAL_LIFETIME;
-          note.style.opacity = Math.max(0.4, ratio); // Sắp hết giờ sẽ hơi mờ dần đi báo hiệu
+          note.style.opacity = Math.max(0.4, ratio);
         }
       }, 1000);
 
-      // Vị trí xuất phát ngẫu nhiên
-      let posX = Math.random() * (window.innerWidth - 120);
-      let posY = Math.random() * (window.innerHeight - 80);
+      // Đảm bảo vị trí xuất phát không bị đè ngay vào khung chat ở giữa
+      let posX, posY;
+      const container = document.querySelector('.scene-container').getBoundingClientRect();
+      
+      for (let i = 0; i < 20; i++) { // Thử tìm vị trí thoáng tối đa 20 lần
+        posX = Math.random() * (window.innerWidth - 120);
+        posY = Math.random() * (window.innerHeight - 80);
+        
+        if (
+          posX + 120 < container.left || posX > container.right ||
+          posY + 40 < container.top || posY > container.bottom
+        ) {
+          break; // Đã tìm được vị trí ngoài khung chat
+        }
+      }
 
       let speedX = (Math.random() - 0.5) * 2.5;
       let speedY = (Math.random() - 0.5) * 2.5;
@@ -232,7 +266,7 @@
 
       function updatePosition() {
         const rect = note.getBoundingClientRect();
-        const container = document.querySelector('.scene-container').getBoundingClientRect();
+        const currentContainer = document.querySelector('.scene-container').getBoundingClientRect();
         
         const maxX = window.innerWidth - rect.width;
         const maxY = window.innerHeight - rect.height;
@@ -240,17 +274,14 @@
         posX += speedX;
         posY += speedY;
 
-        // Va chạm cạnh màn hình
-        if (posX <= 0 || posX >= maxX) {
-          speedX *= -1;
-          posX = Math.max(0, Math.min(posX, maxX));
-        }
-        if (posY <= 0 || posY >= maxY) {
-          speedY *= -1;
-          posY = Math.max(0, Math.min(posY, maxY));
-        }
+        // Va chạm cạnh màn hình (chống kẹt bằng cách đẩy hẳn ra trong biên an toàn)
+        if (posX <= 2) { speedX = Math.abs(speedX); posX = 2; }
+        else if (posX >= maxX - 2) { speedX = -Math.abs(speedX); posX = maxX - 2; }
 
-        // Va chạm khung chat trung tâm
+        if (posY <= 2) { speedY = Math.abs(speedY); posY = 2; }
+        else if (posY >= maxY - 2) { speedY = -Math.abs(speedY); posY = maxY - 2; }
+
+        // Xử lý va chạm chuẩn với khung chat trung tâm để không bị dính sát hay kẹt
         const nextRect = {
           left: posX,
           top: posY,
@@ -259,15 +290,16 @@
         };
 
         if (
-          nextRect.right > container.left &&
-          nextRect.left < container.right &&
-          nextRect.bottom > container.top &&
-          nextRect.top < container.bottom
+          nextRect.right > currentContainer.left &&
+          nextRect.left < currentContainer.right &&
+          nextRect.bottom > currentContainer.top &&
+          nextRect.top < currentContainer.bottom
         ) {
+          // Đẩy dịch chuyển phản xạ mạnh hơn để văng ra khỏi khu vực khung chat
           speedX *= -1;
           speedY *= -1;
-          posX += speedX * 2;
-          posY += speedY * 2;
+          posX += speedX * 4;
+          posY += speedY * 4;
         }
 
         note.style.left = posX + 'px';
@@ -279,16 +311,15 @@
       requestAnimationFrame(updatePosition);
     }
 
-    // Tự động lắng nghe lời nhắn thời gian thực từ mọi người
+    // Tự động lắng nghe lời nhắn thời gian thực từ Firebase
     window.onload = function() {
       db.ref('notes').on('child_added', function(snapshot) {
         const data = snapshot.val();
         if (data && data.text) {
-          createBouncingNote(data.text, data.timestamp);
+          createBouncingNote(data.text, data.timestamp, data.duration);
         }
       });
     };
   </script>
 </body>
-  </html>
-  
+</html>
