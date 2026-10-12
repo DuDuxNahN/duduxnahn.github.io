@@ -1,340 +1,158 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#B7E4E0">
-<meta name="mobile-web-app-capable" content="yes">
-<title>Bubu & Dudu – Việc hôm nay</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@600;700;800&display=swap');
-:root{
-  --teal:#B7E4E0; --teal-d:#7CC9C2; --butter:#FFE49C; --butter-d:#F2CD6B;
-  --line:#4A2418; --ink:#4A2418; --soft:#9A7A6E; --bear:#DDA588; --panda:#FBC7BE;
-  --bg:#FFFDF7; --pink:#F7A7A0;
-}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0}
-body{font-family:'Nunito',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);min-height:100dvh}
-button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
-button:focus-visible,input:focus-visible{outline:3px solid var(--line);outline-offset:2px}
-.app{max-width:480px;margin:0 auto;padding-bottom:170px}
-h1,h2,.big{font-family:'Baloo 2','Nunito',sans-serif}
-
-/* Hero */
-.hero{background:var(--teal);padding:calc(env(safe-area-inset-top) + 12px) 16px 0;position:relative;overflow:hidden;border-radius:0 0 34px 34px}
-.top{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:3}
-.round{width:42px;height:42px;border-radius:50%;background:#fff;border:2.5px solid var(--line);font-size:20px;font-weight:800;display:grid;place-items:center}
-.round:active{transform:scale(.92)}
-.mid{text-align:center;line-height:1.1}
-.mid .big{font-size:24px;font-weight:800}
-.mid .sub{font-size:13px;font-weight:700;color:#5E7F7B}
-.stage{position:relative;height:170px;margin-top:2px}
-.stage.sm{height:120px}
-.wm{position:absolute;font-family:'Baloo 2';font-weight:800;color:#fff;opacity:.8;font-size:68px;line-height:1;letter-spacing:1px;z-index:0}
-.wm.a{left:50%;top:6px;transform:translateX(-50%)}
-.wm.b{left:50%;top:70px;transform:translateX(-50%)}
-.sm .wm{font-size:48px}.sm .wm.b{top:50px}
-.chr{position:absolute;bottom:-22px;width:150px;z-index:1}
-.chr svg{width:100%;display:block;overflow:visible}
-.chr.l{left:-26px;transform:rotate(-9deg)}
-.chr.r{right:-26px;transform:rotate(9deg)}
-.sm .chr{width:104px;bottom:-16px}
-.sm .chr.l{left:-14px}.sm .chr.r{right:-14px}
-
-/* Cards */
-.status{
-  margin:-16px 16px 0;position:relative;z-index:4;background:#fff;border:2.5px solid var(--line);border-radius:22px;
-  padding:12px 14px;box-shadow:0 4px 0 var(--teal-d)
-}
-.say{font-weight:800;font-size:15px;line-height:1.3;margin-bottom:10px}
-.row{display:flex;justify-content:space-between;font-size:13px;font-weight:800;margin-bottom:6px}
-.track{height:16px;background:#fff;border:2.5px solid var(--line);border-radius:99px;overflow:hidden}
-.fill{height:100%;background:var(--pink);border-right:2.5px solid var(--line);transition:width .4s ease;min-width:0}
-.fill.zero{border-right:0}
-.sec{font-size:17px;font-weight:800;margin:22px 20px 8px;font-family:'Baloo 2'}
-.sec.late{color:#C0485F}
-ul{list-style:none;margin:0;padding:0 16px;display:flex;flex-direction:column;gap:10px}
-.item{display:flex;align-items:center;gap:12px;background:#fff;border:2.5px solid var(--line);border-radius:22px;padding:11px 6px 11px 12px;box-shadow:0 3px 0 var(--butter-d)}
-.chk{width:34px;height:34px;border-radius:50%;border:2.5px solid var(--line);flex:none;display:grid;place-items:center;font-size:18px;font-weight:800;color:transparent;background:#fff;transition:background .15s,transform .15s}
-.chk[aria-pressed="true"]{background:var(--butter);color:var(--ink)}
-.chk:active{transform:scale(.88)}
-.chk.ro{pointer-events:none}
-.body{flex:1;min-width:0}
-.title{font-weight:800;font-size:16px;overflow-wrap:anywhere}
-.meta{display:flex;gap:8px;align-items:center;margin-top:4px;font-size:12px;font-weight:700;color:var(--soft);flex-wrap:wrap}
-.chip{padding:1px 9px;border-radius:99px;background:var(--butter);border:2px solid var(--line);color:var(--ink);font-size:11.5px}
-.chip.once{background:var(--panda)}
-.item.done .title{text-decoration:line-through;color:var(--soft)}
-.item.done{opacity:.72}
-.del{width:40px;height:40px;border-radius:50%;font-size:22px;color:var(--soft)}
-.empty{text-align:center;padding:30px 28px;color:var(--soft);font-weight:700;line-height:1.55}
-.empty .btn{margin-top:14px}
-
-/* Buttons */
-.btn{display:inline-block;padding:12px 20px;border-radius:99px;background:var(--butter);border:2.5px solid var(--line);font-weight:800;box-shadow:0 4px 0 var(--line)}
-.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
-.btn.pink{background:var(--panda)}
-.btn.block{display:block;width:100%;text-align:center;margin-top:18px;font-size:16px}
-.btn.ghost{background:#fff;box-shadow:0 3px 0 var(--soft);border-color:var(--soft);color:var(--soft)}
-
-/* Friends */
-.friend{display:flex;align-items:center;gap:12px;background:#fff;border:2.5px solid var(--line);border-radius:22px;padding:10px 14px 10px 8px;box-shadow:0 3px 0 var(--teal-d);width:100%;text-align:left}
-.friend:active{transform:translateY(2px)}
-.friend .av{width:58px;flex:none}.friend .av svg{width:100%;display:block}
-.friend .fb{flex:1;min-width:0}
-.friend .nm{font-weight:800;font-size:16px}
-.friend .st{font-size:12px;font-weight:700;color:var(--soft);margin:2px 0 6px}
-.friend .track{height:11px;border-width:2px}
-.friend .fill{border-right-width:2px}
-.chev{font-size:22px;color:var(--soft);font-weight:800}
-.note{margin:14px 20px 0;font-size:13px;font-weight:700;color:var(--soft);line-height:1.5}
-
-/* Versus */
-.vs{margin:-16px 16px 0;position:relative;z-index:4;background:#fff;border:2.5px solid var(--line);border-radius:22px;padding:14px;box-shadow:0 4px 0 var(--teal-d)}
-.vs h2{margin:0 0 4px;font-size:18px;text-align:center}
-.lane{display:flex;align-items:center;gap:10px;margin-top:12px}
-.lane .av{width:56px;flex:none}.lane .av svg{width:100%;display:block;overflow:visible}
-.lane .lb{flex:1;min-width:0}
-.lane .ln{display:flex;justify-content:space-between;font-weight:800;font-size:14px;margin-bottom:5px}
-.lane .track{height:18px}
-.lane.f .fill{background:var(--teal-d)}
-.verdict{margin-top:14px;text-align:center;font-weight:800;font-size:15px;line-height:1.35;background:var(--butter);border:2.5px solid var(--line);border-radius:16px;padding:9px 10px}
-.upd{text-align:center;font-size:12px;font-weight:700;color:var(--soft);margin-top:8px}
-
-/* Bottom */
-.nav{position:fixed;left:0;right:0;bottom:0;z-index:8;max-width:480px;margin:0 auto;background:var(--butter);border-top:2.5px solid var(--line);border-radius:26px 26px 0 0;display:flex;padding:8px 14px calc(env(safe-area-inset-bottom) + 10px);gap:10px}
-.nav button{flex:1;padding:10px 6px;border-radius:18px;font-weight:800;font-size:15px;border:2.5px solid transparent}
-.nav button.on{background:#fff;border-color:var(--line)}
-.fab{position:fixed;right:max(16px,calc(50% - 224px));bottom:calc(env(safe-area-inset-bottom) + 86px);z-index:7;height:56px;padding:0 22px 0 16px;border-radius:99px;background:var(--panda);border:2.5px solid var(--line);font-weight:800;font-size:16px;display:flex;align-items:center;gap:8px;box-shadow:0 5px 0 var(--line)}
-.fab:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line)}
-.fab span{font-size:28px;line-height:1;margin-top:-3px}
-
-/* Sheet */
-.sheet{position:fixed;inset:0;background:rgba(74,36,24,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
-.sheet[hidden]{display:none}
-.panel{width:100%;max-width:480px;max-height:92dvh;overflow:auto;background:#fff;border:2.5px solid var(--line);border-bottom:0;border-radius:28px 28px 0 0;padding:20px 18px calc(env(safe-area-inset-bottom) + 18px);animation:up .22s ease-out}
-.panel[hidden]{display:none}
-@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
-.panel h2{margin:0 0 12px;font-size:22px}
-.panel label{display:block;font-size:13px;font-weight:800;color:var(--soft);margin-top:14px}
-.panel input[type=text],.panel input[type=time],.panel input[type=date],.panel input[type=url]{width:100%;margin-top:6px;font:inherit;font-size:16px;font-weight:700;color:var(--ink);background:var(--bg);border:2.5px solid var(--line);border-radius:16px;padding:11px 14px}
-.seg{display:flex;background:var(--teal);border:2.5px solid var(--line);border-radius:16px;padding:3px;margin-top:14px;gap:3px}
-.seg button{flex:1;padding:9px;border-radius:12px;font-weight:800}
-.seg button.on{background:#fff;box-shadow:0 0 0 2px var(--line) inset}
-.chkrow{display:flex;gap:10px;align-items:center;margin-top:14px;font-weight:800;font-size:14px}
-.chkrow input{width:22px;height:22px;accent-color:#C48A5A}
-details{margin-top:14px;font-size:13.5px;font-weight:700;line-height:1.55;background:var(--bg);border:2px dashed var(--soft);border-radius:14px;padding:10px 12px}
-summary{cursor:pointer;font-weight:800}
-details ol{margin:8px 0 0;padding-left:20px}
-.hint{font-size:12.5px;color:var(--soft);font-weight:700;margin-top:6px;line-height:1.45}
-.codebox{display:flex;gap:8px;align-items:flex-end}.codebox>div{flex:1}
-.codebox .btn{padding:11px 14px;font-size:14px;margin-bottom:0}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bubu Dudu Todo List</title>
+  <style>
+    :root {
+      --bg-color: #f7ede2;
+      --card-bg: #fff5eb;
+      --primary: #f4a261;
+      --primary-hover: #e76f51;
+      --text: #4a3e3d;
+      --border: #e8d8c8;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+      margin: 0;
+    }
+    .container {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 420px;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      border: 3px solid var(--border);
+      text-align: center;
+    }
+    .header-img {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: var(--primary-hover);
+    }
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 15px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      outline: none;
+      font-size: 1rem;
+    }
+    button.add-btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+    button.add-btn:hover {
+      background: var(--primary-hover);
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      text-align: left;
+    }
+    li {
+      background: white;
+      padding: 12px 15px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--border);
+    }
+    li.completed span {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+    .delete-btn {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-<div class="app">
-  <div id="hero"></div>
-  <main id="main"></main>
-</div>
 
-<button class="fab" id="fab" data-act="addTask"><span>+</span> Thêm việc</button>
-<nav class="nav">
-  <button data-act="nav" data-v="today" id="navToday">🏠 Hôm nay</button>
-  <button data-act="nav" data-v="friends" id="navFriends">🐾 Bạn bè</button>
-</nav>
-
-<div class="sheet" id="sheet" hidden>
-  <!-- Thêm việc -->
-  <div class="panel" data-p="task" hidden role="dialog" aria-label="Việc mới">
-    <h2>Việc mới</h2>
-    <input type="text" id="fTitle" placeholder="Hôm nay cần làm gì nè?" maxlength="80" autocomplete="off" aria-label="Tên việc">
-    <label>Giờ (không bắt buộc)<input type="time" id="fTime"></label>
-    <div class="seg" id="segRepeat">
-      <button type="button" data-r="daily" class="on">Mỗi ngày</button>
-      <button type="button" data-r="once">Một lần</button>
+  <div class="container">
+    <!-- Thay đường dẫn ảnh Bubu Dudu tùy thích -->
+    <img src="https://gifdb.com/images/high/bubu-dudu-happy-dance-c956lyb9f5hvwytm.gif" alt="Bubu Dudu" class="header-img">
+    <h1>Bubu Dudu Todo List 🐾</h1>
+    
+    <div class="input-group">
+      <input type="text" id="todoInput" placeholder="Thêm việc cần làm nhé...">
+      <button class="add-btn" onclick="addTodo()">Thêm</button>
     </div>
-    <label id="dateRow" hidden>Làm vào ngày<input type="date" id="fDate"></label>
-    <label class="chkrow"><input type="checkbox" id="fPriv"> Ẩn với bạn bè 🔒 (bạn bè chỉ thấy “Việc riêng”)</label>
-    <button class="btn pink block" data-act="saveTask">Thêm việc</button>
+
+    <ul id="todoList"></ul>
   </div>
 
-  <!-- Ghép cặp -->
-  <div class="panel" data-p="pair" hidden role="dialog" aria-label="Ghép cặp">
-    <h2>Ghép cặp với bạn</h2>
-    <div class="codebox">
-      <div><label style="margin-top:0">Mã ghép cặp<input type="text" id="pCode" placeholder="VD: BUBU-4821" maxlength="20" autocapitalize="characters" autocomplete="off"></label></div>
-      <button class="btn" data-act="genCode" type="button">Tạo mã</button>
-    </div>
-    <p class="hint">Bạn tạo mã rồi gửi cho bạn bè. Hai người nhập cùng một mã là ghép cặp được.</p>
-    <label>Biệt danh cho bạn ấy (không bắt buộc)<input type="text" id="pLabel" maxlength="20" autocomplete="off"></label>
-    <button class="btn pink block" data-act="savePair">Ghép cặp</button>
-  </div>
+  <script>
+    let todos = JSON.parse(localStorage.getItem('bubu_todos')) || [];
 
-  <!-- Cài đặt -->
-  <div class="panel" data-p="settings" hidden role="dialog" aria-label="Cài đặt">
-    <h2>Cài đặt</h2>
-    <label style="margin-top:0">Tên của bạn<input type="text" id="sName" maxlength="20" autocomplete="off"></label>
-    <div class="seg" id="segAvatar">
-      <button type="button" data-av="bubu">🐻 Bubu (gấu nâu)</button>
-      <button type="button" data-av="dudu">🐼 Dudu (panda)</button>
-    </div>
-    <label>Địa chỉ máy chủ để ghép cặp<input type="url" id="sDb" placeholder="https://ten-du-an-default-rtdb.firebaseio.com" autocomplete="off"></label>
-    <details>
-      <summary>Cách lấy địa chỉ (miễn phí, 3 phút)</summary>
-      <ol>
-        <li>Vào console.firebase.google.com, tạo một dự án.</li>
-        <li>Chọn Build → Realtime Database → Create database → chọn <b>Test mode</b>.</li>
-        <li>Chép địa chỉ dạng <i>https://…firebaseio.com</i> dán vào ô trên.</li>
-        <li>Bạn bè dán <b>cùng địa chỉ</b> và nhập <b>cùng mã ghép cặp</b>.</li>
-      </ol>
-      <p class="hint">Test mode tự hết hạn sau khoảng 30 ngày, lúc đó vào tab Rules để gia hạn. Ai biết cả địa chỉ lẫn mã đều xem được việc của bạn, nên hãy chỉ chia sẻ cho người thân quen.</p>
-    </details>
-    <button class="btn pink block" data-act="saveSettings">Lưu</button>
-  </div>
-</div>
+    function render() {
+      const list = document.getElementById('todoList');
+      list.innerHTML = '';
+      todos.forEach((item, index) => {
+        const li = document.createElement('li');
+        if (item.completed) li.classList.add('completed');
+        li.innerHTML = `
+          <span onclick="toggle(${index})" style="cursor:pointer; flex:1;">${item.text}</span>
+          <button class="delete-btn" onclick="removeTodo(${index})">Xóa</button>
+        `;
+        list.appendChild(li);
+      });
+      localStorage.setItem('bubu_todos', JSON.stringify(todos));
+    }
 
-<script>
-/* ================= Lưu trữ ================= */
-const LKEY='bubu-dudu-v2', OLD='bubu-dudu-todos-v1';
-let mem=null;
-function loadAll(){
-  try{
-    const r=localStorage.getItem(LKEY); if(r) return JSON.parse(r);
-    const o=localStorage.getItem(OLD); if(o) return {tasks:JSON.parse(o)};
-  }catch(e){ if(mem) return mem; }
-  return {};
-}
-const rid=()=>Math.random().toString(36).slice(2,10);
-let S=loadAll();
-S.tasks=S.tasks||[]; S.rooms=S.rooms||[];
-S.settings=Object.assign({name:'',avatar:'bubu',dbUrl:'',id:''},S.settings||{});
-if(!S.settings.id) S.settings.id=rid();
-function save(){ try{localStorage.setItem(LKEY,JSON.stringify(S))}catch(e){mem=S} }
+    function addTodo() {
+      const input = document.getElementById('todoInput');
+      if (input.value.trim() !== '') {
+        todos.push({ text: input.value.trim(), completed: false });
+        input.value = '';
+        render();
+      }
+    }
 
-/* ================= Tiện ích ================= */
-const $=id=>document.getElementById(id);
-const pad=n=>String(n).padStart(2,'0');
-const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-const parse=s=>new Date(s+'T00:00:00');
-const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return ymd(d)};
-const todayStr=()=>ymd(new Date());
-const WD=['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const charName=k=>k==='bubu'?'Bubu':'Dudu';
-const other=k=>k==='bubu'?'dudu':'bubu';
-const myName=()=>S.settings.name.trim()||charName(S.settings.avatar);
+    function toggle(index) {
+      todos[index].completed = !todos[index].completed;
+      render();
+    }
 
-/* ================= Nhân vật (Bubu = gấu nâu, Dudu = panda) ================= */
-function face(kind,o={}){
-  const bubu=kind==='bubu', L='#4A2418';
-  const fill=bubu?'#DDA588':'#FFFFFF', cheek=bubu?'#F5C38A':'#FBC7BE';
-  const ear=(cx,cy,dx)=>`<circle cx="${cx}" cy="${cy}" r="14" fill="${bubu?'#DDA588':L}" stroke="${L}" stroke-width="3.5"/>`+
-    (bubu?`<circle cx="${cx+dx}" cy="${cy-1}" r="7.5" fill="${L}"/>`:'');
-  const tongue=o.happy?`<path d="M57.500 69 q2.500 9 5 0 z" fill="#F58E9C" stroke="${L}" stroke-width="2.200" stroke-linejoin="round"/>`:'';
-  const crown=o.crown?`<path d="M42 16 L47 0 L60 11 L73 0 L78 16 Z" fill="#FFD25E" stroke="${L}" stroke-width="3" stroke-linejoin="round"/>`:'';
-  return `<svg viewBox="0 -4 120 104" role="img" aria-label="${charName(kind)}">
-    ${ear(25,28,-3)}${ear(95,28,3)}
-    <ellipse cx="60" cy="60" rx="52" ry="40" fill="${fill}" stroke="${L}" stroke-width="3.5"/>
-    <circle cx="25" cy="74" r="10" fill="${cheek}"/><circle cx="95" cy="74" r="10" fill="${cheek}"/>
-    <circle cx="40" cy="60" r="5.500" fill="${L}"/><circle cx="80" cy="60" r="5.500" fill="${L}"/>
-    <path d="M54 66 q3 -4 6 0 q3 4 6 0" fill="none" stroke="${L}" stroke-width="2.800" stroke-linecap="round"/>
-    ${tongue}${crown}
-  </svg>`;
-}
+    function removeTodo(index) {
+      todos.splice(index, 1);
+      render();
+    }
 
-/* ================= Dữ liệu việc ================= */
-const appliesOn=(t,d)=>t.repeat==='daily'?d>=t.created:t.date===d;
-const isDone=(t,d)=>t.done.includes(d);
-const timeKey=t=>t.time||'99:99';
-const byDoneTime=d=>(a,b)=>(isDone(a,d)-isDone(b,d))||timeKey(a).localeCompare(timeKey(b));
-const byTime=(a,b)=>timeKey(a).localeCompare(timeKey(b));
-
-function myProg(){
-  const d=todayStr(), l=S.tasks.filter(t=>appliesOn(t,d));
-  const done=l.filter(t=>isDone(t,d)).length;
-  return {done,total:l.length,pct:l.length?Math.round(done/l.length*100):0};
-}
-function snapProg(s){
-  if(!s||s.date!==todayStr()) return {done:0,total:0,pct:0,stale:true};
-  const l=Array.isArray(s.tasks)?s.tasks:Object.values(s.tasks||{});
-  const done=l.filter(x=>x.d).length;
-  return {done,total:l.length,pct:l.length?Math.round(done/l.length*100):0,stale:false,list:l};
-}
-function mySnap(){
-  const d=todayStr();
-  return {name:myName(),avatar:S.settings.avatar,date:d,updated:Date.now(),
-    tasks:S.tasks.filter(t=>appliesOn(t,d)).sort(byTime).map(t=>({t:t.priv?'':t.title,p:t.priv?1:0,tm:t.time||'',d:isDone(t,d)?1:0,r:t.repeat==='daily'?1:0}))};
-}
-
-/* ================= Đồng bộ bạn bè ================= */
-const dbUrl=()=>(S.settings.dbUrl||'').trim().replace(/\/+$/,'');
-let pushTimer=null;
-function pushSoon(){ clearTimeout(pushTimer); pushTimer=setTimeout(pushAll,700); }
-async function pushAll(){
-  if(!dbUrl()) return;
-  const snap=JSON.stringify(mySnap());
-  for(const r of S.rooms){
-    if(r.code==='DEMO') continue;
-    try{ await fetch(`${dbUrl()}/rooms/${r.code}/members/${S.settings.id}.json`,{method:'PUT',body:snap}); }catch(e){}
-  }
-}
-function demoSnap(){
-  const h=new Date().getHours()+new Date().getMinutes()/60;
-  const names=['Uống nước 💧','Tập thể dục','Đọc sách 20 phút','Học tiếng Anh','Dọn phòng','Gọi cho mẹ'];
-  const n=Math.max(0,Math.min(names.length,Math.floor((h-6)/3)));
-  return {name:'Bạn thử',avatar:other(S.settings.avatar),date:todayStr(),updated:Date.now(),
-    tasks:names.map((t,i)=>({t,p:0,tm:'',d:i<n?1:0,r:1}))};
-}
-async function pullRoom(r){
-  if(r.code==='DEMO'){ r.last=demoSnap(); r.friendId='demo'; r.fetched=Date.now(); r.err=false; return; }
-  if(!dbUrl()){ r.err=true; return; }
-  try{
-    const res=await fetch(`${dbUrl()}/rooms/${r.code}/members.json`,{cache:'no-store'});
-    if(!res.ok) throw new Error('http');
-    const m=(await res.json())||{};
-    const ids=Object.keys(m).filter(id=>id!==S.settings.id);
-    if(ids.length){ r.friendId=ids[0]; r.last=m[ids[0]]; }
-    r.fetched=Date.now(); r.err=false;
-  }catch(e){ r.err=true; }
-}
-async function refresh(){
-  const list=view==='versus'?S.rooms.filter(r=>r.code===curRoom):S.rooms;
-  await Promise.all(list.map(pullRoom));
-  save();
-  if((view==='friends'||view==='versus')&&$('sheet').hidden) render();
-}
-setInterval(()=>{ if(!document.hidden&&(view==='friends'||view==='versus')) refresh(); },6000);
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden){ pushSoon(); if(view!=='today') refresh(); }});
-
-/* ================= Trạng thái giao diện ================= */
-let view='today', curRoom=null, sel=todayStr(), repeat='daily', avPick=S.settings.avatar;
-
-function taskHTML(t,dateKey){
-  const done=isDone(t,dateKey);
-  const dd=parse(dateKey);
-  return `<li class="item ${done?'done':''}">
-    <button class="chk" data-act="toggle" data-id="${t.id}" data-date="${dateKey}" aria-pressed="${done}" aria-label="Đánh dấu xong: ${esc(t.title)}">✓</button>
-    <div class="body"><div class="title">${t.priv?'🔒 ':''}${esc(t.title)}</div>
-      <div class="meta"><span class="chip ${t.repeat==='once'?'once':''}">${t.repeat==='daily'?'Mỗi ngày':'Một lần'}</span>
-      ${t.time?`<span>⏰ ${t.time}</span>`:''}${dateKey!==sel?`<span>${dd.getDate()}/${dd.getMonth()+1}</span>`:''}</div></div>
-    <button class="del" data-act="del" data-id="${t.id}" aria-label="Xoá: ${esc(t.title)}">×</button>
-  </li>`;
-}
-function roItem(x){
-  const priv=x.p?1:0;
-  return `<li class="item ${x.d?'done':''}">
-    <span class="chk ro" aria-pressed="${!!x.d}" ${x.d?'style="background:var(--butter);color:var(--ink)"':''}>✓</span>
-    <div class="body"><div class="title">${priv?'🔒 Việc riêng':esc(x.t||'')}</div>
-    <div class="meta"><span class="chip ${x.r?'':'once'}">${x.r?'Mỗi ngày':'Một lần'}</span>${x.tm?`<span>⏰ ${esc(x.tm)}</span>`:''}</div></div>
-  </li>`;
-}
-const barHTML=p=>`<div class="track"><div class="fill ${p?'':'zero'}" style="width:${p}%"></div></div>`;
-const hhmm=ts=>{const d=new Date(ts);return `${pad(d.getHours())}:${pad(d.getMinutes())}`};
-
-function renderToday(){
-  const today=todayStr(), d=parse(sel);
-  const lab=sel===today?'Hôm nay':sel===addDays(today,1)?'Ngày mai':sel===addDays(today,-1)?'Hôm qua':WD[d.getDay()];
-  const list=S.tasks.filter(t=>appliesOn(t,sel)).sort(byDoneTime(sel));
-  const overdue=sel===today?S.tasks.filter(t=>t.repeat==='once'&&t.date<today&&!t.done.length).sort((a,b)=>a.date.lo
+    render();
+  </script>
+</body>
+</html>
