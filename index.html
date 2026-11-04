@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
   <title>Bubu & Dudu Hugs 🐾</title>
   <style>
     * {
@@ -10,151 +10,35 @@
       margin: 0;
       padding: 0;
     }
+
+    html, body {
+      height: 100%;
+      overscroll-behavior: none;
+    }
+
     body {
       background-color: #fceade;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
       overflow: hidden;
       position: relative;
     }
 
-    /* Nút "Cùng nhau" ở góc phải trên */
-    .together-btn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background-color: #e76f51;
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      font-size: 0.9rem;
-      font-weight: bold;
-      border-radius: 50px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(231, 111, 81, 0.4);
-      z-index: 100;
-      transition: 0.2s;
+    button {
+      font-family: inherit;
     }
 
-    .together-btn:active {
-      transform: scale(0.95);
-    }
-
-    /* Popup To-do List */
-    .todo-modal {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: white;
-      padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-      border: 3px solid #f4a261;
-      width: 320px;
-      max-height: 80vh;
-      z-index: 200;
-      flex-direction: column;
-      gap: 12px;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .todo-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: bold;
-      color: #e76f51;
-      font-size: 1.1rem;
-    }
-
-    .close-modal {
-      background: none;
-      border: none;
-      font-size: 1.2rem;
-      cursor: pointer;
-      color: #888;
-    }
-
-    .todo-input-box {
-      display: flex;
-      gap: 6px;
-    }
-
-    .todo-input {
-      flex: 1;
-      padding: 8px 12px;
-      border: 2px solid #f4a261;
-      border-radius: 10px;
-      outline: none;
-      font-size: 0.9rem;
-    }
-
-    .todo-add-btn {
-      background-color: #2a9d8f;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .todo-list {
-      list-style: none;
-      max-height: 200px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .todo-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #fdf0ed;
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      color: #333;
-      border: 1px solid #f4a261;
-    }
-
-    .todo-item.completed span {
-      text-decoration: line-through;
-      color: #aaa;
-    }
-
-    .todo-actions {
-      display: flex;
-      gap: 6px;
-    }
-
-    .todo-actions button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    /* Khung giao diện trung tâm đặt ở dưới 2/3 màn hình */
+    /* ============ MÀN HÌNH CHÍNH ============ */
     .scene-container {
       text-align: center;
-      z-index: 20;
       background: rgba(255, 255, 255, 0.95);
       padding: 16px;
       border-radius: 20px;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
       border: 3px solid #f4a261;
       width: 320px;
+      max-width: 92vw;
       position: absolute;
-      top: 62%;
+      top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
     }
@@ -194,118 +78,413 @@
       transform: scale(0.95);
     }
 
-    .message-form {
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 8px;
-      animation: fadeIn 0.5s ease;
+    .btn-action:disabled {
+      opacity: 0.6;
+      cursor: default;
     }
 
-    .message-input {
-      padding: 8px 12px;
-      border: 2px solid #f4a261;
-      border-radius: 10px;
-      outline: none;
+    .together-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #e76f51;
+      color: white;
+      border: none;
+      padding: 10px 18px;
       font-size: 0.9rem;
-      text-align: center;
-      width: 100%;
-    }
-
-    .file-upload-label {
-      font-size: 0.85rem;
-      color: #e76f51;
       font-weight: bold;
+      border-radius: 50px;
       cursor: pointer;
-      background: #fff0f3;
-      padding: 6px;
-      border-radius: 8px;
-      border: 1px dashed #ff758c;
-      display: block;
+      box-shadow: 0 4px 12px rgba(231, 111, 81, 0.4);
+      z-index: 100;
+      transition: 0.2s;
     }
 
-    .time-select {
-      padding: 6px 10px;
-      border: 2px solid #f4a261;
-      border-radius: 10px;
-      outline: none;
-      font-size: 0.85rem;
-      background: #fff;
-      color: #e76f51;
-      font-weight: bold;
-      text-align: center;
-      width: 100%;
+    .together-btn:active {
+      transform: scale(0.95);
     }
 
-    .limit-warning {
-      color: #e76f51;
-      font-size: 0.8rem;
-      font-weight: bold;
+    /* ============ KHUNG CHAT (TOÀN MÀN HÌNH, THEO BÀN PHÍM) ============ */
+    .chat-overlay {
       display: none;
-      margin-top: 2px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100dvh;
+      z-index: 200;
+      background: #fceade;
+      flex-direction: column;
+      overflow: hidden;
     }
 
-    /* Khung khoảnh khắc/lời nhắn nảy quanh màn hình */
-    .floating-note {
-      position: absolute;
-      padding: 8px 12px;
-      border-radius: 16px;
-      font-weight: bold;
-      font-size: 0.85rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    .chat-overlay.open {
+      display: flex;
+    }
+
+    .chat-header {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      padding-top: max(10px, env(safe-area-inset-top));
+      background: #e76f51;
+      color: white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .chat-back {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.5rem;
+      line-height: 1;
       cursor: pointer;
-      white-space: nowrap;
-      z-index: 10;
-      transition: opacity 0.5s ease, transform 0.1s ease;
-      border-width: 3px;
-      border-style: solid;
+      padding: 2px 8px;
+    }
+
+    .chat-title {
+      flex: 1;
+      font-weight: bold;
+      font-size: 1.05rem;
+    }
+
+    .me-switch {
+      display: flex;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 50px;
+      padding: 2px;
+    }
+
+    .me-switch button {
+      border: none;
+      background: none;
+      color: white;
+      font-size: 0.78rem;
+      font-weight: bold;
+      padding: 5px 11px;
+      border-radius: 50px;
+      cursor: pointer;
+    }
+
+    .me-switch button.active {
+      background: white;
+      color: #e76f51;
+    }
+
+    /* Màn nhập mật khẩu */
+    .pin-panel {
+      flex: 1;
+      min-height: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+      padding: 20px;
     }
 
-    .floating-note:active {
+    .pin-title {
+      font-weight: bold;
+      color: #333;
+      font-size: 1rem;
+    }
+
+    .pin-hint {
+      font-size: 0.82rem;
+      color: #b08968;
+    }
+
+    .pin-input {
+      width: 150px;
+      padding: 10px;
+      border: 2px solid #f4a261;
+      border-radius: 12px;
+      outline: none;
+      text-align: center;
+      font-size: 1.6rem;
+      letter-spacing: 0.5rem;
+      text-indent: 0.5rem;
+      font-family: inherit;
+      background: white;
+    }
+
+    .pin-input:focus {
+      border-color: #e76f51;
+    }
+
+    .pin-error {
+      min-height: 1.1em;
+      font-size: 0.82rem;
+      font-weight: bold;
+      color: #e76f51;
+    }
+
+    .pin-shake {
+      animation: shake 0.35s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+
+    /* Vùng tin nhắn */
+    .chat-body {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .chat-body.open {
+      display: flex;
+    }
+
+    .chat-messages {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 12px 12px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .chat-empty {
+      margin: auto;
+      text-align: center;
+      color: #b08968;
+      font-size: 0.9rem;
+    }
+
+    .day-divider {
+      align-self: center;
+      margin: 10px 0 6px;
+      padding: 3px 12px;
+      border-radius: 50px;
+      background: rgba(244, 162, 97, 0.28);
+      color: #9c5a2e;
+      font-size: 0.72rem;
+      font-weight: bold;
+    }
+
+    .msg-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 80%;
+    }
+
+    .msg-row.mine {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+
+    .msg-row.theirs {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+
+    .msg-sender {
+      font-size: 0.7rem;
+      color: #b08968;
+      margin: 4px 8px 1px;
+    }
+
+    .bubble {
+      padding: 8px 12px;
+      border-radius: 18px;
+      font-size: 0.95rem;
+      line-height: 1.35;
+      word-break: break-word;
+      white-space: pre-wrap;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .mine .bubble {
+      background: #e76f51;
+      color: white;
+      border-bottom-right-radius: 5px;
+    }
+
+    .theirs .bubble {
+      background: white;
+      color: #333;
+      border: 1.5px solid #f4a261;
+      border-bottom-left-radius: 5px;
+    }
+
+    .bubble img, .bubble video {
+      max-width: 220px;
+      max-height: 260px;
+      width: 100%;
+      border-radius: 12px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .msg-meta {
+      font-size: 0.68rem;
+      color: #b08968;
+      margin: 2px 8px 0;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .msg-delete {
+      background: none;
+      border: none;
+      color: #e76f51;
+      font-size: 0.72rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: none;
+    }
+
+    .msg-row.show-actions .msg-delete {
+      display: inline;
+    }
+
+    /* Thanh nhập kiểu app chat (luôn nằm sát đáy khung, ngay trên bàn phím) */
+    .chat-composer {
+      flex: none;
+      padding: 8px 10px;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+      background: #fff6ef;
+      border-top: 1px solid rgba(244, 162, 97, 0.4);
+    }
+
+    .attach-preview {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      border: 1.5px dashed #f4a261;
+      border-radius: 12px;
+      padding: 6px 10px;
+      margin-bottom: 8px;
+      font-size: 0.82rem;
+      color: #9c5a2e;
+    }
+
+    .attach-preview.show {
+      display: flex;
+    }
+
+    .attach-preview span {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .attach-preview button {
+      background: none;
+      border: none;
+      color: #e76f51;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .composer-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      flex: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: #fff0e6;
+      color: #e76f51;
+      font-size: 1.15rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-btn:active {
       transform: scale(0.92);
     }
 
-    .floating-note img, .floating-note video {
-      width: 70px;
-      height: 70px;
-      border-radius: 8px;
-      object-fit: cover;
+    .composer-field {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      background: white;
+      border: 2px solid #f4a261;
+      border-radius: 22px;
+      padding: 0 6px 0 14px;
+      min-width: 0;
     }
 
-    /* Hiệu ứng nổ tung 9 trái tim */
-    .explosion-heart {
-      position: absolute;
-      font-size: 1.3rem;
-      pointer-events: none;
-      z-index: 30;
-      animation: explodeAnim 0.7s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
+    .composer-field:focus-within {
+      border-color: #e76f51;
     }
 
-    @keyframes explodeAnim {
-      0% {
-        transform: translate(0, 0) scale(0.4);
-        opacity: 1;
-      }
-      100% {
-        transform: translate(var(--tx), var(--ty)) scale(1.3);
-        opacity: 0;
-      }
+    .chat-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 16px; /* >=16px để iOS không tự phóng to trang */
+      line-height: 1.3;
+      padding: 9px 0;
+      max-height: 110px;
+      background: none;
+      min-width: 0;
     }
 
-    .style-1 { background: #fff0f3; color: #ff4d6d; border-color: #ff758c; }
-    .style-2 { background: #e8f4f8; color: #1d3557; border-color: #457b9d; }
-    .style-3 { background: #fefae0; color: #bc6c25; border-color: #dda15e; }
-    .style-4 { background: #f3c4fb; color: #7209b7; border-color: #b5179e; }
-    .style-5 { background: #e2f0cb; color: #386641; border-color: #6a994e; }
-    .style-6 { background: #ffccd5; color: #c9184a; border-color: #ff758c; }
+    .time-pill {
+      flex: none;
+      align-self: center;
+      border: none;
+      background: #fff0e6;
+      color: #e76f51;
+      font-size: 0.72rem;
+      font-weight: bold;
+      padding: 5px 9px;
+      border-radius: 50px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
+    .send-btn {
+      flex: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: #2a9d8f;
+      color: white;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 8px rgba(42, 157, 143, 0.4);
+    }
+
+    .send-btn:active {
+      transform: scale(0.92);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pin-shake { animation: none; }
     }
   </style>
 
@@ -314,52 +493,55 @@
 </head>
 <body>
 
-  <!-- Nút "Cùng nhau" ở góc phải trên -->
-  <button class="together-btn" onclick="toggleTodoModal()">Cùng nhau 💕</button>
+  <!-- Nút mở khung chat -->
+  <button class="together-btn" onclick="openChat()">Lời nhắn 💌</button>
 
-  <!-- Popup To-do List -->
-  <div id="todoModal" class="todo-modal">
-    <div class="todo-header">
-      <span>✨ Việc Cùng Nhau ✨</span>
-      <button class="close-modal" onclick="toggleTodoModal()">×</button>
-    </div>
-    <div class="todo-input-box">
-      <input type="text" id="todoInput" class="todo-input" placeholder="Thêm việc cần làm..." maxlength="40">
-      <button class="todo-add-btn" onclick="addTodo()">Thêm</button>
-    </div>
-    <ul id="todoList" class="todo-list"></ul>
-  </div>
-
+  <!-- Màn hình chính -->
   <div class="scene-container">
     <div class="gif-box">
       <img id="bubuGif" src="bubu1.gif" alt="">
     </div>
-
     <button id="hugBtn" class="btn-action" onclick="startHug()">Ấn để Dudu ôm Bubu 🐾</button>
+  </div>
 
-    <div id="messageForm" class="message-form">
-      <input type="text" id="noteInput" class="message-input" placeholder="Nhập lời nhắn..." maxlength="50">
-      
-      <label class="file-upload-label">
-        📁 Chọn Ảnh / Video khoảnh khắc
-        <input type="file" id="mediaFile" accept="image/*,video/*" style="display: none;">
-      </label>
+  <!-- Khung chat toàn màn hình -->
+  <div id="chatOverlay" class="chat-overlay">
+    <div class="chat-header">
+      <button class="chat-back" onclick="closeChat()" aria-label="Quay lại">‹</button>
+      <div class="chat-title">Bubu & Dudu 💕</div>
+      <div id="meSwitch" class="me-switch" style="display: none;">
+        <button data-me="Bubu" onclick="setMe('Bubu')">Bubu</button>
+        <button data-me="Dudu" onclick="setMe('Dudu')">Dudu</button>
+      </div>
+    </div>
 
-      <select id="timeSelect" class="time-select">
-        <option value="60">Thời gian: 60 giây</option>
-        <option value="300">Thời gian: 5 phút</option>
-        <option value="600">Thời gian: 10 phút</option>
-        <option value="900">Thời gian: 15 phút</option>
-        <option value="1800">Thời gian: 30 phút</option>
-        <option value="3600">Thời gian: 1 giờ</option>
-        <option value="7200" selected>Thời gian: 2 giờ (Mặc định)</option>
-        <option value="18000">Thời gian: 5 giờ</option>
-        <option value="21600">Thời gian: 6 giờ</option>
-        <option value="28800">Thời gian: 8 giờ</option>
-      </select>
+    <!-- Nhập mật khẩu -->
+    <div id="pinPanel" class="pin-panel">
+      <div class="pin-title">Nhập mật khẩu 4 số</div>
+      <div class="pin-hint">Gợi ý: sinh nhật của BuBu 🎂</div>
+      <input type="password" id="pinInput" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••">
+      <div id="pinError" class="pin-error"></div>
+    </div>
 
-      <button class="btn-action" style="background-color: #2a9d8f;" onclick="saveNote()">Gửi khoảnh khắc ✨</button>
-      <div id="limitWarning" class="limit-warning">⚠️ Đã đạt tối đa 20 khoảnh khắc!</div>
+    <!-- Nội dung chat (chỉ hiện sau khi mở khóa) -->
+    <div id="chatBody" class="chat-body">
+      <div id="chatMessages" class="chat-messages"></div>
+
+      <div class="chat-composer">
+        <div id="attachPreview" class="attach-preview">
+          <span id="attachName"></span>
+          <button onpointerdown="event.preventDefault()" onclick="clearAttachment()" aria-label="Bỏ tệp">✕</button>
+        </div>
+        <div class="composer-row">
+          <button class="icon-btn" onclick="document.getElementById('mediaFile').click()" aria-label="Đính kèm ảnh hoặc video">📎</button>
+          <input type="file" id="mediaFile" accept="image/*,video/*" style="display: none;">
+          <div class="composer-field">
+            <textarea id="chatInput" class="chat-input" rows="1" placeholder="Nhắn gì đó..." maxlength="500"></textarea>
+            <button id="timePill" class="time-pill" onpointerdown="event.preventDefault()" onclick="toggleDuration()" title="Thời gian hiển thị">⏳ 24 giờ</button>
+          </div>
+          <button class="send-btn" onpointerdown="event.preventDefault()" onclick="sendMessage()" aria-label="Gửi">➤</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -377,301 +559,209 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    const PERMANENT = -1;
+    const DEFAULT_LIFETIME = 24 * 3600 * 1000; // 24 giờ
+
+    /* ================= ÔM BUBU (hiện 3 giây rồi biến mất) ================= */
+    let hugTimer = null;
+
     function startHug() {
       const gifImg = document.getElementById('bubuGif');
       const hugBtn = document.getElementById('hugBtn');
-      const messageForm = document.getElementById('messageForm');
 
+      if (hugTimer) return;
       gifImg.src = "bubu2.gif";
-      hugBtn.style.display = 'none';
-      messageForm.style.display = 'flex';
+      hugBtn.disabled = true;
+
+      hugTimer = setTimeout(function() {
+        gifImg.src = "bubu1.gif";
+        hugBtn.disabled = false;
+        hugTimer = null;
+      }, 3000);
     }
 
-    function toggleTodoModal() {
-      const modal = document.getElementById('todoModal');
-      modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+    /* ================= KHUNG CHAT THEO BÀN PHÍM ================= */
+    // Khi bàn phím bật lên, co khung chat đúng bằng phần màn hình còn trống
+    // để ô nhập luôn nằm ngay trên bàn phím và không bị che.
+    function syncViewport() {
+      const overlay = document.getElementById('chatOverlay');
+      if (!overlay.classList.contains('open')) return;
+      const vv = window.visualViewport;
+      if (!vv) return;
+
+      overlay.style.height = vv.height + 'px';
+      overlay.style.top = vv.offsetTop + 'px';
+      window.scrollTo(0, 0);
+
+      const box = document.getElementById('chatMessages');
+      box.scrollTop = box.scrollHeight;
     }
 
-    function addTodo() {
-      const input = document.getElementById('todoInput');
-      const text = input.value.trim();
-      if (text !== "") {
-        db.ref('todos').push({ text: text, completed: false });
-        input.value = '';
-      }
+    function resetViewport() {
+      const overlay = document.getElementById('chatOverlay');
+      overlay.style.height = '';
+      overlay.style.top = '';
     }
 
-    db.ref('todos').on('value', function(snapshot) {
-      const todoList = document.getElementById('todoList');
-      todoList.innerHTML = '';
-      snapshot.forEach(function(childSnapshot) {
-        const todo = childSnapshot.val();
-        const todoId = childSnapshot.key;
-        const li = document.createElement('li');
-        li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
-        li.innerHTML = `
-          <span>${todo.text}</span>
-          <div class="todo-actions">
-            <button onclick="toggleTodo('${todoId}', ${!todo.completed})">✅</button>
-            <button onclick="deleteTodo('${todoId}')">❌</button>
-          </div>
-        `;
-        todoList.appendChild(li);
-      });
+    if (window.visualViewport) {
+      visualViewport.addEventListener('resize', syncViewport);
+      visualViewport.addEventListener('scroll', syncViewport);
+    }
+
+    document.getElementById('chatInput').addEventListener('focus', function() {
+      setTimeout(syncViewport, 300);
     });
 
-    function toggleTodo(id, status) {
-      db.ref('todos/' + id).update({ completed: status });
+    document.getElementById('pinInput').addEventListener('focus', function() {
+      setTimeout(syncViewport, 300);
+    });
+
+    /* ================= MẬT KHẨU 4 SỐ ================= */
+    // Mật khẩu KHÔNG nằm trong code, chỉ có mã băm (SHA-256 + salt).
+    const PIN_SALT = 'bubu-dudu-salt-v1';
+    const PIN_HASH = 'e52970b369047515d3dd25be5bdcd9bd10e0cfec7801248c9d7de596ff2df504';
+    const PIN_HASH_FALLBACK = 'fdece82f7'; // dùng khi trình duyệt không hỗ trợ SHA-256
+
+    let chatUnlocked = false;
+    let chatListenerStarted = false;
+
+    async function hashPin(pin) {
+      const data = PIN_SALT + ':' + pin;
+      if (window.crypto && window.crypto.subtle) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+      let h = 5381;
+      for (let i = 0; i < data.length; i++) h = ((h * 33) ^ data.charCodeAt(i)) >>> 0;
+      return 'f' + h.toString(16);
     }
 
-    function deleteTodo(id) {
-      db.ref('todos/' + id).remove();
+    function showPinError(msg) {
+      const input = document.getElementById('pinInput');
+      document.getElementById('pinError').textContent = msg;
+      input.value = '';
+      input.classList.remove('pin-shake');
+      void input.offsetWidth;
+      input.classList.add('pin-shake');
     }
 
-    const activeNotes = [];
-
-    function saveNote() {
-      const input = document.getElementById('noteInput');
-      const fileInput = document.getElementById('mediaFile');
-      const timeSelect = document.getElementById('timeSelect');
-      const warning = document.getElementById('limitWarning');
-      const text = input.value.trim();
-      const durationSeconds = parseInt(timeSelect.value);
-
-      if (activeNotes.length >= 20) {
-        warning.style.display = 'block';
-        return;
-      }
-
-      const file = fileInput.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          db.ref('notes').push({
-            text: text,
-            mediaUrl: e.target.result,
-            mediaType: file.type.startsWith('video') ? 'video' : 'image',
-            timestamp: Date.now(),
-            duration: durationSeconds * 1000
-          });
-          input.value = '';
-          fileInput.value = '';
-        };
-        reader.readAsDataURL(file);
-      } else if (text !== "") {
-        db.ref('notes').push({
-          text: text,
-          timestamp: Date.now(),
-          duration: durationSeconds * 1000
-        });
-        input.value = '';
-      }
+    function showPinScreen() {
+      chatUnlocked = false;
+      document.getElementById('pinPanel').style.display = 'flex';
+      document.getElementById('chatBody').classList.remove('open');
+      document.getElementById('meSwitch').style.display = 'none';
+      document.getElementById('pinError').textContent = '';
+      const input = document.getElementById('pinInput');
+      input.value = '';
+      setTimeout(() => input.focus(), 50);
     }
 
-    function triggerExplosion(x, y) {
-      const heartEmojis = ['💖', '💕', '💓', '💗', '💘', '💜', '💙', '💚', '💛'];
-      for (let i = 0; i < 9; i++) {
-        const heart = document.createElement('div');
-        heart.className = 'explosion-heart';
-        heart.innerText = heartEmojis[i];
-        heart.style.left = x + 'px';
-        heart.style.top = y + 'px';
-
-        const angle = (i / 9) * Math.PI * 2;
-        const distance = 50 + Math.random() * 40;
-        const tx = Math.cos(angle) * distance;
-        const ty = Math.sin(angle) * distance;
-
-        heart.style.setProperty('--tx', tx + 'px');
-        heart.style.setProperty('--ty', ty + 'px');
-
-        document.body.appendChild(heart);
-        setTimeout(() => heart.remove(), 700);
-      }
+    function unlockChat() {
+      chatUnlocked = true;
+      document.getElementById('pinPanel').style.display = 'none';
+      document.getElementById('chatBody').classList.add('open');
+      document.getElementById('meSwitch').style.display = 'flex';
+      document.getElementById('pinInput').blur();
+      applyMe();
+      startChatListener();
+      scheduleRender(true);
+      syncViewport();
     }
 
-    function createBouncingNote(data, noteId) {
-      const warning = document.getElementById('limitWarning');
+    function openChat() {
+      document.getElementById('chatOverlay').classList.add('open');
+      if (!chatUnlocked) showPinScreen();
+      syncViewport();
+    }
 
-      if (activeNotes.length >= 20) {
-        warning.style.display = 'block';
-        return;
-      }
+    function closeChat() {
+      document.getElementById('chatInput').blur();
+      document.getElementById('chatOverlay').classList.remove('open');
+      resetViewport();
+      // Đóng chat thì khóa lại
+      showPinScreen();
+      document.getElementById('pinInput').blur();
+    }
 
-      const note = document.createElement('div');
-      const randomStyleNum = Math.floor(Math.random() * 6) + 1;
-      note.className = `floating-note style-${randomStyleNum}`;
-
-      let contentHTML = '';
-      if (data.mediaUrl) {
-        if (data.mediaType === 'video') {
-          contentHTML += `<video src="${data.mediaUrl}" autoplay muted loop></video>`;
+    document.getElementById('pinInput').addEventListener('input', async function(e) {
+      // Chỉ cho nhập số, tối đa 4 số
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+      if (e.target.value.length === 4) {
+        const h = await hashPin(e.target.value);
+        if (h === PIN_HASH || h === PIN_HASH_FALLBACK) {
+          unlockChat();
         } else {
-          contentHTML += `<img src="${data.mediaUrl}" alt="media">`;
+          showPinError('Sai mật khẩu, thử lại nhé');
         }
       }
-      if (data.text) {
-        contentHTML += `<span>💌 ${data.text}</span>`;
-      }
-      note.innerHTML = contentHTML;
-      document.body.appendChild(note);
+    });
 
-      const TOTAL_LIFETIME = data.duration || (2 * 3600 * 1000);
-      const now = Date.now();
-      const msgTime = data.timestamp || now;
-      let remainingTime = TOTAL_LIFETIME - (now - msgTime);
+    /* ================= NGƯỜI GỬI (Bubu / Dudu) ================= */
+    let me = 'Bubu';
+    try {
+      const saved = localStorage.getItem('bubuChatMe');
+      if (saved === 'Bubu' || saved === 'Dudu') me = saved;
+    } catch (err) {}
 
-      if (remainingTime <= 0) {
-        if (noteId) db.ref('notes/' + noteId).remove();
-        note.remove();
-        return;
-      }
-
-      // Ấn liên tục 3 lần để hiện thông báo xác nhận xóa
-      let clickCount = 0;
-      const removeNoteAction = (e) => {
-        e.stopPropagation();
-        clickCount++;
-
-        note.style.transform = `scale(0.85) rotate(${Math.random() * 10 - 5}deg)`;
-        setTimeout(() => { note.style.transform = 'scale(1) rotate(0deg)'; }, 100);
-
-        if (clickCount >= 3) {
-          const confirmDelete = confirm("Bạn có chắc chắn muốn xóa khoảnh khắc này không? 💕");
-          if (confirmDelete) {
-            const rect = note.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            
-            clearInterval(timerInterval);
-            note.remove();
-            
-            if (noteId) {
-              db.ref('notes/' + noteId).remove();
-            }
-            
-            const index = activeNotes.findIndex(item => item.element === note);
-            if (index > -1) activeNotes.splice(index, 1);
-
-            if (activeNotes.length < 20) {
-              warning.style.display = 'none';
-            }
-
-            triggerExplosion(centerX, centerY);
-          } else {
-            clickCount = 0;
-          }
-        }
-      };
-
-      note.addEventListener('click', removeNoteAction);
-      note.addEventListener('touchstart', removeNoteAction);
-
-      const timerInterval = setInterval(() => {
-        const currentRemaining = TOTAL_LIFETIME - (Date.now() - msgTime);
-        if (currentRemaining <= 0) {
-          clearInterval(timerInterval);
-          const rect = note.getBoundingClientRect();
-          const centerX = rect.left + rect.width / 2;
-          const centerY = rect.top + rect.height / 2;
-          
-          note.remove();
-          if (noteId) {
-            db.ref('notes/' + noteId).remove();
-          }
-
-          const index = activeNotes.findIndex(item => item.element === note);
-          if (index > -1) activeNotes.splice(index, 1);
-
-          if (activeNotes.length < 20) {
-            warning.style.display = 'none';
-          }
-
-          triggerExplosion(centerX, centerY);
-        }
-      }, 1000);
-
-      activeNotes.push({ element: note, timer: timerInterval });
-
-      if (activeNotes.length >= 20) {
-        warning.style.display = 'block';
-      }
-
-      let posX, posY;
-      const container = document.querySelector('.scene-container').getBoundingClientRect();
-      
-      // Tìm vị trí xuất phát an toàn, không nằm đè lên khung chat
-      for (let i = 0; i < 50; i++) {
-        posX = Math.random() * (window.innerWidth - 130);
-        posY = Math.random() * (window.innerHeight - 110);
-        if (
-          posX + 130 < container.left - 15 || posX > container.right + 15 ||
-          posY + 70 < container.top - 15 || posY > container.bottom + 15
-        ) {
-          break;
-        }
-      }
-
-      let speedX = (Math.random() - 0.5) * 1.5;
-      let speedY = (Math.random() - 0.5) * 1.5;
-      if (Math.abs(speedX) < 0.5) speedX = 0.7;
-      if (Math.abs(speedY) < 0.5) speedY = 0.7;
-
-      function updatePosition() {
-        if (!document.body.contains(note)) return;
-
-        const rect = note.getBoundingClientRect();
-        const currentContainer = document.querySelector('.scene-container').getBoundingClientRect();
-        
-        const maxX = window.innerWidth - rect.width;
-        const maxY = window.innerHeight - rect.height;
-
-        posX += speedX;
-        posY += speedY;
-
-        if (posX <= 5) { speedX = Math.abs(speedX); posX = 6; }
-        else if (posX >= maxX - 5) { speedX = -Math.abs(speedX); posX = maxX - 6; }
-
-        if (posY <= 5) { speedY = Math.abs(speedY); posY = 6; }
-        else if (posY >= maxY - 5) { speedY = -Math.abs(speedY); posY = maxY - 6; }
-
-        // Chống kẹt: nếu chạm vào vùng khung chat sẽ tự động văng ngược hướng ra ngoài
-        const nextRect = {
-          left: posX,
-          top: posY,
-          right: posX + rect.width,
-          bottom: posY + rect.height
-        };
-
-        if (
-          nextRect.right > currentContainer.left - 10 &&
-          nextRect.left < currentContainer.right + 10 &&
-          nextRect.bottom > currentContainer.top - 10 &&
-          nextRect.top < currentContainer.bottom + 10
-        ) {
-          speedX *= -1;
-          speedY *= -1;
-          posX += speedX * 12;
-          posY += speedY * 12;
-        }
-
-        note.style.left = posX + 'px';
-        note.style.top = posY + 'px';
-
-        requestAnimationFrame(updatePosition);
-      }
-
-      requestAnimationFrame(updatePosition);
+    function applyMe() {
+      document.querySelectorAll('#meSwitch button').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.me === me);
+      });
     }
 
-    window.onload = function() {
-      db.ref('notes').on('child_added', function(snapshot) {
-        const data = snapshot.val();
-        if (data && (data.text || data.mediaUrl)) {
-          createBouncingNote(data, snapshot.key);
-        }
-      });
-    };
-  </script>
-</body>
-</html>
+    function setMe(name) {
+      me = name;
+      try { localStorage.setItem('bubuChatMe', name); } catch (err) {}
+      applyMe();
+      scheduleRender(false);
+    }
+
+    /* ================= THỜI GIAN HIỂN THỊ (24 giờ / vĩnh viễn) ================= */
+    let permanentMode = false;
+
+    function toggleDuration() {
+      permanentMode = !permanentMode;
+      document.getElementById('timePill').textContent = permanentMode ? '♾️ Vĩnh viễn' : '⏳ 24 giờ';
+    }
+
+    /* ================= ĐÍNH KÈM ẢNH / VIDEO ================= */
+    const mediaFile = document.getElementById('mediaFile');
+
+    mediaFile.addEventListener('change', function() {
+      const file = mediaFile.files[0];
+      const preview = document.getElementById('attachPreview');
+      if (file) {
+        document.getElementById('attachName').textContent = (file.type.startsWith('video') ? '🎬 ' : '🖼️ ') + file.name;
+        preview.classList.add('show');
+      } else {
+        preview.classList.remove('show');
+      }
+    });
+
+    function clearAttachment() {
+      mediaFile.value = '';
+      document.getElementById('attachPreview').classList.remove('show');
+    }
+
+    /* ================= GỬI TIN NHẮN ================= */
+    const chatInput = document.getElementById('chatInput');
+
+    function autoGrow() {
+      chatInput.style.height = 'auto';
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 110) + 'px';
+    }
+
+    chatInput.addEventListener('input', autoGrow);
+
+    // Enter để gửi, Shift+Enter để xuống dòng
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    function sendMessage() {
+      const text = chatInput.value.trim();
+      const file = mediaFile.files[0];
+      const duration = permanentMode ? PERMANENT : DEFAULT_LIFETIME
