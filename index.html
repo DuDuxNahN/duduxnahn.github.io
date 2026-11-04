@@ -776,6 +776,19 @@
       }
     });
 
+    function pushMessageToDb(base) {
+      db.ref('notes').push(base, function(error) {
+        if (error) {
+          console.error('Gửi thất bại:', error);
+          alert('Không gửi được tin nhắn! Kiểm tra kết nối mạng hoặc quy tắc Firebase nhé.');
+        } else {
+          // Ép render lại ngay để tin nhắn lập tức xuất hiện
+          messages.set('temp_' + Date.now(), base);
+          scheduleRender(true);
+        }
+      });
+    }
+
     function sendMessage() {
       const text = chatInput.value.trim();
       const file = mediaFile.files[0];
@@ -789,15 +802,21 @@
       if (text) base.text = text;
 
       if (file) {
+        // Kiểm tra dung lượng file (Firebase Realtime DB khuyến nghị < 5MB cho Base64)
+        if (file.size > 8 * 1024 * 1024) {
+          alert('Tệp quá lớn! Vui lòng chọn tệp nhỏ hơn 8MB.');
+          return;
+        }
+
         const reader = new FileReader();
         reader.onload = function(e) {
           base.mediaUrl = e.target.result;
           base.mediaType = file.type.startsWith('video') ? 'video' : 'image';
-          db.ref('notes').push(base);
+          pushMessageToDb(base);
         };
         reader.readAsDataURL(file);
       } else {
-        db.ref('notes').push(base);
+        pushMessageToDb(base);
       }
 
       chatInput.value = '';
