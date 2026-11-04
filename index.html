@@ -78,32 +78,6 @@
       transform: scale(0.95);
     }
 
-    .btn-action:disabled {
-      opacity: 0.6;
-      cursor: default;
-    }
-
-    .together-btn {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background-color: #e76f51;
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      font-size: 0.9rem;
-      font-weight: bold;
-      border-radius: 50px;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(231, 111, 81, 0.4);
-      z-index: 100;
-      transition: 0.2s;
-    }
-
-    .together-btn:active {
-      transform: scale(0.95);
-    }
-
     /* ============ KHUNG CHAT (TOÀN MÀN HÌNH, THEO BÀN PHÍM) ============ */
     .chat-overlay {
       display: none;
@@ -354,7 +328,7 @@
       display: inline;
     }
 
-    /* Thanh nhập kiểu app chat (luôn nằm sát đáy khung, ngay trên bàn phím) */
+    /* Thanh nhập kiểu app chat */
     .chat-composer {
       flex: none;
       padding: 8px 10px;
@@ -427,7 +401,7 @@
       background: white;
       border: 2px solid #f4a261;
       border-radius: 22px;
-      padding: 0 6px 0 14px;
+      padding: 0 14px;
       min-width: 0;
     }
 
@@ -441,26 +415,12 @@
       outline: none;
       resize: none;
       font-family: inherit;
-      font-size: 16px; /* >=16px để iOS không tự phóng to trang */
+      font-size: 16px;
       line-height: 1.3;
       padding: 9px 0;
       max-height: 110px;
       background: none;
       min-width: 0;
-    }
-
-    .time-pill {
-      flex: none;
-      align-self: center;
-      border: none;
-      background: #fff0e6;
-      color: #e76f51;
-      font-size: 0.72rem;
-      font-weight: bold;
-      padding: 5px 9px;
-      border-radius: 50px;
-      cursor: pointer;
-      white-space: nowrap;
     }
 
     .send-btn {
@@ -515,12 +475,12 @@
     <!-- Nhập mật khẩu -->
     <div id="pinPanel" class="pin-panel">
       <div class="pin-title">Nhập mật khẩu 4 số</div>
-      <div class="pin-hint">Gợi ý: sinh nhật của BuBu 🎂</div>
+      <div class="pin-hint">Gợi ý: sinh nhật của BuBu TIE 🦁</div>
       <input type="password" id="pinInput" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••">
       <div id="pinError" class="pin-error"></div>
     </div>
 
-    <!-- Nội dung chat (chỉ hiện sau khi mở khóa) -->
+    <!-- Nội dung chat -->
     <div id="chatBody" class="chat-body">
       <div id="chatMessages" class="chat-messages"></div>
 
@@ -534,7 +494,6 @@
           <input type="file" id="mediaFile" accept="image/*,video/*" style="display: none;">
           <div class="composer-field">
             <textarea id="chatInput" class="chat-input" rows="1" placeholder="Nhắn gì đó..." maxlength="500"></textarea>
-            <button id="timePill" class="time-pill" onpointerdown="event.preventDefault()" onclick="toggleDuration()" title="Thời gian hiển thị">⏳ 24 giờ</button>
           </div>
           <button class="send-btn" onpointerdown="event.preventDefault()" onclick="sendMessage()" aria-label="Gửi">➤</button>
         </div>
@@ -553,7 +512,6 @@
       appId: "1:751175174116:web:13ceee8e30b1d22a0469f1"
     };
 
-    // Nếu Firebase bị chặn / không tải được thì trang vẫn chạy, chỉ báo lỗi trong khung chat
     let firebaseOk = true;
     let db;
     try {
@@ -567,12 +525,7 @@
       db = { ref: function() { return ref; } };
     }
 
-    const PERMANENT = -1;
-    const DEFAULT_LIFETIME = 24 * 3600 * 1000; // 24 giờ
-
     /* ================= KHUNG CHAT THEO BÀN PHÍM ================= */
-    // Khi bàn phím bật lên, co khung chat đúng bằng phần màn hình còn trống
-    // để ô nhập luôn nằm ngay trên bàn phím và không bị che.
     function syncViewport() {
       const overlay = document.getElementById('chatOverlay');
       if (!overlay.classList.contains('open')) return;
@@ -606,11 +559,10 @@
       setTimeout(syncViewport, 300);
     });
 
-    /* ================= MẬT KHẨU 4 SỐ ================= */
-    // Mật khẩu KHÔNG nằm trong code, chỉ có mã băm (SHA-256 + salt).
+    /* ================= MẬT KHẨU 4 SỐ (1108) ================= */
     const PIN_SALT = 'bubu-dudu-salt-v1';
     const PIN_HASH = 'e52970b369047515d3dd25be5bdcd9bd10e0cfec7801248c9d7de596ff2df504';
-    const PIN_HASH_FALLBACK = 'fdece82f7'; // dùng khi trình duyệt không hỗ trợ SHA-256
+    const PIN_HASH_FALLBACK = 'fdece82f7';
 
     let chatUnlocked = false;
     let chatListenerStarted = false;
@@ -653,12 +605,10 @@
       document.getElementById('meSwitch').style.display = 'flex';
       document.getElementById('pinInput').blur();
 
-      // Mỗi bước chạy riêng, lỗi ở một bước không chặn việc vào chat
       try { applyMe(); } catch (err) { console.error(err); }
       try { scheduleRender(true); } catch (err) { console.error(err); }
       try { startChatListener(); } catch (err) { console.error(err); }
 
-      // Đợi bàn phím đóng xong rồi mới chỉnh lại kích thước khung
       setTimeout(function() {
         resetViewport();
         syncViewport();
@@ -675,13 +625,11 @@
       document.getElementById('chatInput').blur();
       document.getElementById('chatOverlay').classList.remove('open');
       resetViewport();
-      // Đóng chat thì khóa lại
       showPinScreen();
       document.getElementById('pinInput').blur();
     }
 
     document.getElementById('pinInput').addEventListener('input', async function(e) {
-      // Chỉ cho nhập số, tối đa 4 số
       e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
       if (e.target.value.length === 4) {
         let h = '';
@@ -720,14 +668,6 @@
       scheduleRender(false);
     }
 
-    /* ================= THỜI GIAN HIỂN THỊ (24 giờ / vĩnh viễn) ================= */
-    let permanentMode = false;
-
-    function toggleDuration() {
-      permanentMode = !permanentMode;
-      document.getElementById('timePill').textContent = permanentMode ? '♾️ Vĩnh viễn' : '⏳ 24 giờ';
-    }
-
     /* ================= ĐÍNH KÈM ẢNH / VIDEO ================= */
     const mediaFile = document.getElementById('mediaFile');
 
@@ -747,7 +687,7 @@
       document.getElementById('attachPreview').classList.remove('show');
     }
 
-    /* ================= GỬI TIN NHẮN ================= */
+    /* ================= GỬI TIN NHẮN (MẶC ĐỊNH VĨNH VIỄN) ================= */
     const chatInput = document.getElementById('chatInput');
 
     function autoGrow() {
@@ -757,7 +697,6 @@
 
     chatInput.addEventListener('input', autoGrow);
 
-    // Enter để gửi, Shift+Enter để xuống dòng
     chatInput.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -768,14 +707,12 @@
     function sendMessage() {
       const text = chatInput.value.trim();
       const file = mediaFile.files[0];
-      const duration = permanentMode ? PERMANENT : DEFAULT_LIFETIME;
 
       if (!text && !file) return;
 
       const base = {
         sender: me,
-        timestamp: Date.now(),
-        duration: duration
+        timestamp: Date.now()
       };
       if (text) base.text = text;
 
@@ -794,20 +731,13 @@
       chatInput.value = '';
       autoGrow();
       clearAttachment();
-      // Giữ bàn phím mở để nhắn tiếp
       chatInput.focus();
     }
 
     /* ================= HIỂN THỊ ĐOẠN CHAT ================= */
-    const messages = new Map(); // id -> dữ liệu
+    const messages = new Map();
     let renderQueued = false;
     let forceScroll = false;
-
-    function isExpired(data) {
-      if (data.duration === PERMANENT) return false;
-      const life = data.duration || DEFAULT_LIFETIME;
-      return (data.timestamp || 0) + life <= Date.now();
-    }
 
     function pad2(n) {
       return String(n).padStart(2, '0');
@@ -815,7 +745,12 @@
 
     function timeLabel(ts) {
       const d = new Date(ts);
-      return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+      const hours = pad2(d.getHours());
+      const mins = pad2(d.getMinutes());
+      const day = pad2(d.getDate());
+      const month = pad2(d.getMonth() + 1);
+      const year = d.getFullYear();
+      return `${hours}:${mins} · ${day}/${month}/${year}`;
     }
 
     function dayLabel(ts) {
@@ -838,10 +773,6 @@
       ref.on('child_added', function(snap) {
         const data = snap.val();
         if (!data || !(data.text || data.mediaUrl)) return;
-        if (isExpired(data)) {
-          ref.child(snap.key).remove();
-          return;
-        }
         messages.set(snap.key, data);
         scheduleRender(true);
       });
@@ -851,19 +782,6 @@
         scheduleRender(false);
       });
     }
-
-    // Dọn tin nhắn hết hạn mỗi 30 giây
-    setInterval(function() {
-      let changed = false;
-      messages.forEach(function(data, id) {
-        if (isExpired(data)) {
-          messages.delete(id);
-          db.ref('notes/' + id).remove();
-          changed = true;
-        }
-      });
-      if (changed) scheduleRender(false);
-    }, 30000);
 
     function scheduleRender(scrollDown) {
       if (scrollDown) forceScroll = true;
@@ -898,7 +816,6 @@
       }
 
       let lastDay = '';
-      let lastSender = null;
 
       list.forEach(function(item) {
         const data = item.data;
@@ -911,20 +828,16 @@
           divider.textContent = dayLabel(ts);
           box.appendChild(divider);
           lastDay = day;
-          lastSender = null;
         }
 
         const mine = data.sender === me;
         const row = document.createElement('div');
         row.className = 'msg-row ' + (mine ? 'mine' : 'theirs');
 
-        if (!mine && data.sender && data.sender !== lastSender) {
-          const name = document.createElement('div');
-          name.className = 'msg-sender';
-          name.textContent = data.sender;
-          row.appendChild(name);
-        }
-        lastSender = data.sender || null;
+        const name = document.createElement('div');
+        name.className = 'msg-sender';
+        name.textContent = data.sender || 'Bubu';
+        row.appendChild(name);
 
         const bubble = document.createElement('div');
         bubble.className = 'bubble';
@@ -954,7 +867,7 @@
         meta.className = 'msg-meta';
 
         const time = document.createElement('span');
-        time.textContent = timeLabel(ts) + (data.duration === PERMANENT ? ' · ♾️' : '');
+        time.textContent = timeLabel(ts);
         meta.appendChild(time);
 
         const del = document.createElement('button');
@@ -968,7 +881,6 @@
         });
         meta.appendChild(del);
 
-        // Chạm vào tin nhắn để hiện nút Xóa
         bubble.addEventListener('click', function() {
           row.classList.toggle('show-actions');
         });
