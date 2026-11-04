@@ -758,4 +758,230 @@
     chatInput.addEventListener('input', autoGrow);
 
     // Enter để gửi, Shift+Enter để xuống dòng
-    chatInput.a
+    chatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    function sendMessage() {
+      const text = chatInput.value.trim();
+      const file = mediaFile.files[0];
+      const duration = permanentMode ? PERMANENT : DEFAULT_LIFETIME;
+
+      if (!text && !file) return;
+
+      const base = {
+        sender: me,
+        timestamp: Date.now(),
+        duration: duration
+      };
+      if (text) base.text = text;
+
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          base.mediaUrl = e.target.result;
+          base.mediaType = file.type.startsWith('video') ? 'video' : 'image';
+          db.ref('notes').push(base);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        db.ref('notes').push(base);
+      }
+
+      chatInput.value = '';
+      autoGrow();
+      clearAttachment();
+      // Giữ bàn phím mở để nhắn tiếp
+      chatInput.focus();
+    }
+
+    /* ================= HIỂN THỊ ĐOẠN CHAT ================= */
+    const messages = new Map(); // id -> dữ liệu
+    let renderQueued = false;
+    let forceScroll = false;
+
+    function isExpired(data) {
+      if (data.duration === PERMANENT) return false;
+      const life = data.duration || DEFAULT_LIFETIME;
+      return (data.timestamp || 0) + life <= Date.now();
+    }
+
+    function pad2(n) {
+      return String(n).padStart(2, '0');
+    }
+
+    function timeLabel(ts) {
+      const d = new Date(ts);
+      return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    }
+
+    function dayLabel(ts) {
+      const d = new Date(ts);
+      const today = new Date();
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+      const key = d.toDateString();
+      if (key === today.toDateString()) return 'Hôm nay';
+      if (key === yesterday.toDateString()) return 'Hôm qua';
+      return pad2(d.getDate()) + '/' + pad2(d.getMonth() + 1) + '/' + d.getFullYear();
+    }
+
+    function startChatListener() {
+      if (chatListenerStarted) return;
+      chatListenerStarted = true;
+
+      const ref = db.ref('notes');
+
+      ref.on('child_added', function(snap) {
+        const data = snap.val();
+        if (!data || !(data.text || data.mediaUrl)) return;
+        if (isExpired(data)) {
+          ref.child(snap.key).remove();
+          return;
+        }
+        messages.set(snap.key, data);
+        scheduleRender(true);
+      });
+
+      ref.on('child_removed', function(snap) {
+        messages.delete(snap.key);
+        scheduleRender(false);
+      });
+    }
+
+    // Dọn tin nhắn hết hạn mỗi 30 giây
+    setInterval(function() {
+      let changed = false;
+      messages.forEach(function(data, id) {
+        if (isExpired(data)) {
+          messages.delete(id);
+          db.ref('notes/' + id).remove();
+          changed = true;
+        }
+      });
+      if (changed) scheduleRender(false);
+    }, 30000);
+
+    function scheduleRender(scrollDown) {
+      if (scrollDown) forceScroll = true;
+      if (renderQueued) return;
+      renderQueued = true;
+      requestAnimationFrame(function() {
+        renderQueued = false;
+        renderChat();
+      });
+    }
+
+    function renderChat() {
+      const box = document.getElementById('chatMessages');
+      const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 120;
+      const shouldScroll = forceScroll || nearBottom;
+      forceScroll = false;
+
+      box.innerHTML = '';
+
+      const list = Array.from(messages.entries())
+        .map(function(entry) { return { id: entry[0], data: entry[1] }; })
+        .sort(function(a, b) { return (a.data.timestamp || 0) - (b.data.timestamp || 0); });
+
+      if (list.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'chat-empty';
+        empty.textContent = firebaseOk
+          ? 'Chưa có tin nhắn nào. Nhắn gì đó đi nè 💌'
+          : 'Không kết nối được máy chủ tin nhắn. Hãy tắt Brave Shields cho trang này (biểu tượng sư tử cạnh thanh địa chỉ) rồi tải lại trang nhé.';
+        box.appendChild(empty);
+        return;
+      }
+
+      let lastDay = '';
+      let lastSender = null;
+
+      list.forEach(function(item) {
+        const data = item.data;
+        const ts = data.timestamp || Date.now();
+        const day = new Date(ts).toDateString();
+
+        if (day !== lastDay) {
+          const divider = document.createElement('div');
+          divider.className = 'day-divider';
+          divider.textContent = dayLabel(ts);
+          box.appendChild(divider);
+          lastDay = day;
+          lastSender = null;
+        }
+
+        const mine = data.sender === me;
+        const row = document.createElement('div');
+        row.className = 'msg-row ' + (mine ? 'mine' : 'theirs');
+
+        if (!mine && data.sender && data.sender !== lastSender) {
+          const name = document.createElement('div');
+          name.className = 'msg-sender';
+          name.textContent = data.sender;
+          row.appendChild(name);
+        }
+        lastSender = data.sender || null;
+
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+
+        if (data.mediaUrl) {
+          if (data.mediaType === 'video') {
+            const v = document.createElement('video');
+            v.src = data.mediaUrl;
+            v.controls = true;
+            v.playsInline = true;
+            v.muted = true;
+            bubble.appendChild(v);
+          } else {
+            const img = document.createElement('img');
+            img.src = data.mediaUrl;
+            img.alt = 'Ảnh';
+            bubble.appendChild(img);
+          }
+        }
+        if (data.text) {
+          const t = document.createElement('span');
+          t.textContent = data.text;
+          bubble.appendChild(t);
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'msg-meta';
+
+        const time = document.createElement('span');
+        time.textContent = timeLabel(ts) + (data.duration === PERMANENT ? ' · ♾️' : '');
+        meta.appendChild(time);
+
+        const del = document.createElement('button');
+        del.className = 'msg-delete';
+        del.textContent = 'Xóa';
+        del.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (confirm('Xóa tin nhắn này nhé? 💕')) {
+            db.ref('notes/' + item.id).remove();
+          }
+        });
+        meta.appendChild(del);
+
+        // Chạm vào tin nhắn để hiện nút Xóa
+        bubble.addEventListener('click', function() {
+          row.classList.toggle('show-actions');
+        });
+
+        row.appendChild(bubble);
+        row.appendChild(meta);
+        box.appendChild(row);
+      });
+
+      if (shouldScroll) {
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+  </script>
+</body>
+</html>
