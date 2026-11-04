@@ -124,6 +124,27 @@
       font-size: 1.05rem;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-clear-all {
+      background: rgba(255, 255, 255, 0.25);
+      border: none;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 5px 9px;
+      border-radius: 50px;
+      cursor: pointer;
+    }
+
+    .btn-clear-all:active {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
     .me-switch {
       display: flex;
       background: rgba(255, 255, 255, 0.25);
@@ -466,16 +487,19 @@
     <div class="chat-header">
       <button class="chat-back" onclick="closeChat()" aria-label="Quay lại">‹</button>
       <div class="chat-title">Bubu & Dudu 💕</div>
-      <div id="meSwitch" class="me-switch" style="display: none;">
-        <button data-me="Bubu" onclick="setMe('Bubu')">Bubu</button>
-        <button data-me="Dudu" onclick="setMe('Dudu')">Dudu</button>
+      <div class="header-actions">
+        <button id="clearAllBtn" class="btn-clear-all" onclick="confirmClearAll()" style="display: none;">🗑️ Xóa tất cả</button>
+        <div id="meSwitch" class="me-switch" style="display: none;">
+          <button data-me="Bubu" onclick="setMe('Bubu')">Bubu</button>
+          <button data-me="Dudu" onclick="setMe('Dudu')">Dudu</button>
+        </div>
       </div>
     </div>
 
     <!-- Nhập mật khẩu -->
     <div id="pinPanel" class="pin-panel">
       <div class="pin-title">Nhập mật khẩu 4 số</div>
-      <div class="pin-hint">Gợi ý: sinh nhật của BuBu TIE 🦁</div>
+      <div class="pin-hint">Gợi ý: nhập mã PIN để truy cập 🐾</div>
       <input type="password" id="pinInput" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••">
       <div id="pinError" class="pin-error"></div>
     </div>
@@ -525,6 +549,9 @@
       db = { ref: function() { return ref; } };
     }
 
+    // Tải dữ liệu ngầm từ Firebase ngay từ khi mở trang
+    try { startChatListener(); } catch (err) { console.error(err); }
+
     /* ================= KHUNG CHAT THEO BÀN PHÍM ================= */
     function syncViewport() {
       const overlay = document.getElementById('chatOverlay');
@@ -559,10 +586,10 @@
       setTimeout(syncViewport, 300);
     });
 
-    /* ================= MẬT KHẨU 4 SỐ (1108) ================= */
+    /* ================= MẬT KHẨU 4 SỐ ĐÃ MÃ HÓA (1003) ================= */
     const PIN_SALT = 'bubu-dudu-salt-v1';
-    const PIN_HASH = 'e52970b369047515d3dd25be5bdcd9bd10e0cfec7801248c9d7de596ff2df504';
-    const PIN_HASH_FALLBACK = 'fdece82f7';
+    const PIN_HASH = '468e5cb566357162cd36dfe73645877fdb6d118f94b6150bb11125251d0a40ea';
+    const PIN_HASH_FALLBACK = 'fdece767d';
 
     let chatUnlocked = false;
     let chatListenerStarted = false;
@@ -576,6 +603,23 @@
       let h = 5381;
       for (let i = 0; i < data.length; i++) h = ((h * 33) ^ data.charCodeAt(i)) >>> 0;
       return 'f' + h.toString(16);
+    }
+
+    async function verifyPinPrompt(actionText) {
+      const inputPin = prompt(actionText || 'Vui lòng nhập mật khẩu 4 số để xác nhận:');
+      if (!inputPin) return false;
+      try {
+        const h = await hashPin(inputPin.trim());
+        if (h === PIN_HASH || h === PIN_HASH_FALLBACK) {
+          return true;
+        } else {
+          alert('Sai mật khẩu!');
+          return false;
+        }
+      } catch (err) {
+        alert('Có lỗi xảy ra khi kiểm tra mật khẩu.');
+        return false;
+      }
     }
 
     function showPinError(msg) {
@@ -592,6 +636,7 @@
       document.getElementById('pinPanel').style.display = 'flex';
       document.getElementById('chatBody').classList.remove('open');
       document.getElementById('meSwitch').style.display = 'none';
+      document.getElementById('clearAllBtn').style.display = 'none';
       document.getElementById('pinError').textContent = '';
       const input = document.getElementById('pinInput');
       input.value = '';
@@ -603,11 +648,11 @@
       document.getElementById('pinPanel').style.display = 'none';
       document.getElementById('chatBody').classList.add('open');
       document.getElementById('meSwitch').style.display = 'flex';
+      document.getElementById('clearAllBtn').style.display = 'block';
       document.getElementById('pinInput').blur();
 
       try { applyMe(); } catch (err) { console.error(err); }
       try { scheduleRender(true); } catch (err) { console.error(err); }
-      try { startChatListener(); } catch (err) { console.error(err); }
 
       setTimeout(function() {
         resetViewport();
@@ -668,6 +713,23 @@
       scheduleRender(false);
     }
 
+    /* ================= XÓA TẤT CẢ DỮ LIỆU CŨ ================= */
+    async function confirmClearAll() {
+      const isAuth = await verifyPinPrompt('Nhập mật khẩu để XÓA TẤT CẢ tin nhắn:');
+      if (!isAuth) return;
+
+      if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử chat không? Hành động này không thể hoàn tác! 🗑️')) {
+        db.ref('notes').remove()
+          .then(() => {
+            alert('Đã xóa sạch toàn bộ dữ liệu tin nhắn cũ!');
+          })
+          .catch((err) => {
+            console.error('Lỗi khi xóa:', err);
+            alert('Lỗi xóa dữ liệu, vui lòng thử lại.');
+          });
+      }
+    }
+
     /* ================= ĐÍNH KÈM ẢNH / VIDEO ================= */
     const mediaFile = document.getElementById('mediaFile');
 
@@ -687,7 +749,7 @@
       document.getElementById('attachPreview').classList.remove('show');
     }
 
-    /* ================= GỬI TIN NHẮN (MẶC ĐỊNH VĨNH VIỄN) ================= */
+    /* ================= GỬI TIN NHẮN (ĐỒNG THỜI ẢNH VÀ LỜI NHẮN) ================= */
     const chatInput = document.getElementById('chatInput');
 
     function autoGrow() {
@@ -765,21 +827,26 @@
     }
 
     function startChatListener() {
-      if (chatListenerStarted) return;
+      if (chatListenerStarted || !firebaseOk) return;
       chatListenerStarted = true;
 
-      const ref = db.ref('notes');
+      // Giới hạn tải 100 tin nhắn gần nhất
+      const ref = db.ref('notes').limitToLast(100);
 
       ref.on('child_added', function(snap) {
         const data = snap.val();
         if (!data || !(data.text || data.mediaUrl)) return;
         messages.set(snap.key, data);
-        scheduleRender(true);
+        if (chatUnlocked) {
+          scheduleRender(true);
+        }
       });
 
       ref.on('child_removed', function(snap) {
         messages.delete(snap.key);
-        scheduleRender(false);
+        if (chatUnlocked) {
+          scheduleRender(false);
+        }
       });
     }
 
@@ -873,9 +940,10 @@
         const del = document.createElement('button');
         del.className = 'msg-delete';
         del.textContent = 'Xóa';
-        del.addEventListener('click', function(e) {
+        del.addEventListener('click', async function(e) {
           e.stopPropagation();
-          if (confirm('Xóa tin nhắn này nhé? 💕')) {
+          const isAuth = await verifyPinPrompt('Nhập mật khẩu để XÓA tin nhắn này:');
+          if (isAuth) {
             db.ref('notes/' + item.id).remove();
           }
         });
