@@ -493,15 +493,12 @@
 </head>
 <body>
 
-  <!-- Nút mở khung chat -->
-  <button class="together-btn" onclick="openChat()">Lời nhắn 💌</button>
-
   <!-- Màn hình chính -->
   <div class="scene-container">
     <div class="gif-box">
       <img id="bubuGif" src="bubu1.gif" alt="">
     </div>
-    <button id="hugBtn" class="btn-action" onclick="startHug()">Ấn để Dudu ôm Bubu 🐾</button>
+    <button id="chatBtn" class="btn-action" onclick="openChat()">Ấn để chat với nhà gấu 🐾</button>
   </div>
 
   <!-- Khung chat toàn màn hình -->
@@ -556,29 +553,22 @@
       appId: "1:751175174116:web:13ceee8e30b1d22a0469f1"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+    // Nếu Firebase bị chặn / không tải được thì trang vẫn chạy, chỉ báo lỗi trong khung chat
+    let firebaseOk = true;
+    let db;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+    } catch (err) {
+      console.error('Firebase lỗi:', err);
+      firebaseOk = false;
+      const noop = function() { return ref; };
+      const ref = { push: noop, on: noop, remove: noop, child: noop };
+      db = { ref: function() { return ref; } };
+    }
 
     const PERMANENT = -1;
     const DEFAULT_LIFETIME = 24 * 3600 * 1000; // 24 giờ
-
-    /* ================= ÔM BUBU (hiện 3 giây rồi biến mất) ================= */
-    let hugTimer = null;
-
-    function startHug() {
-      const gifImg = document.getElementById('bubuGif');
-      const hugBtn = document.getElementById('hugBtn');
-
-      if (hugTimer) return;
-      gifImg.src = "bubu2.gif";
-      hugBtn.disabled = true;
-
-      hugTimer = setTimeout(function() {
-        gifImg.src = "bubu1.gif";
-        hugBtn.disabled = false;
-        hugTimer = null;
-      }, 3000);
-    }
 
     /* ================= KHUNG CHAT THEO BÀN PHÍM ================= */
     // Khi bàn phím bật lên, co khung chat đúng bằng phần màn hình còn trống
@@ -662,10 +652,17 @@
       document.getElementById('chatBody').classList.add('open');
       document.getElementById('meSwitch').style.display = 'flex';
       document.getElementById('pinInput').blur();
-      applyMe();
-      startChatListener();
-      scheduleRender(true);
-      syncViewport();
+
+      // Mỗi bước chạy riêng, lỗi ở một bước không chặn việc vào chat
+      try { applyMe(); } catch (err) { console.error(err); }
+      try { scheduleRender(true); } catch (err) { console.error(err); }
+      try { startChatListener(); } catch (err) { console.error(err); }
+
+      // Đợi bàn phím đóng xong rồi mới chỉnh lại kích thước khung
+      setTimeout(function() {
+        resetViewport();
+        syncViewport();
+      }, 350);
     }
 
     function openChat() {
@@ -687,7 +684,14 @@
       // Chỉ cho nhập số, tối đa 4 số
       e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
       if (e.target.value.length === 4) {
-        const h = await hashPin(e.target.value);
+        let h = '';
+        try {
+          h = await hashPin(e.target.value);
+        } catch (err) {
+          console.error(err);
+          showPinError('Lỗi kiểm tra mật khẩu, tải lại trang nhé');
+          return;
+        }
         if (h === PIN_HASH || h === PIN_HASH_FALLBACK) {
           unlockChat();
         } else {
@@ -754,14 +758,4 @@
     chatInput.addEventListener('input', autoGrow);
 
     // Enter để gửi, Shift+Enter để xuống dòng
-    chatInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-      }
-    });
-
-    function sendMessage() {
-      const text = chatInput.value.trim();
-      const file = mediaFile.files[0];
-      const duration = permanentMode ? PERMANENT : DEFAULT_LIFETIME
+    chatInput.a
