@@ -78,7 +78,7 @@
       transform: scale(0.95);
     }
 
-    /* ============ KHUNG CHAT (TOÀN MÀN HÌNH, THEO BÀN PHÍM) ============ */
+    /* ============ KHUNG CHAT ============ */
     .chat-overlay {
       display: none;
       position: fixed;
@@ -658,7 +658,11 @@
       document.getElementById('pinInput').blur();
 
       try { applyMe(); } catch (err) { console.error(err); }
-      try { scheduleRender(true); } catch (err) { console.error(err); }
+      
+      // Render dữ liệu lập tức khi mở màn hình chat
+      renderChat();
+      const box = document.getElementById('chatMessages');
+      box.scrollTop = box.scrollHeight;
 
       setTimeout(function() {
         resetViewport();
