@@ -496,10 +496,10 @@
       </div>
     </div>
 
-    <!-- Nhập mật khẩu -->
+    <!-- Nhập mật khẩu đăng nhập -->
     <div id="pinPanel" class="pin-panel">
       <div class="pin-title">Nhập mật khẩu 4 số</div>
-      <div class="pin-hint">Gợi ý: nhập mã PIN để truy cập 🐾</div>
+      <div class="pin-hint">Gợi ý: sinh nhật của BuBu TIE 🦁</div>
       <input type="password" id="pinInput" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••">
       <div id="pinError" class="pin-error"></div>
     </div>
@@ -586,10 +586,16 @@
       setTimeout(syncViewport, 300);
     });
 
-    /* ================= MẬT KHẨU 4 SỐ ĐÃ MÃ HÓA (1003) ================= */
+    /* ================= MẬT KHẨU MÃ HÓA ================= */
     const PIN_SALT = 'bubu-dudu-salt-v1';
-    const PIN_HASH = '468e5cb566357162cd36dfe73645877fdb6d118f94b6150bb11125251d0a40ea';
-    const PIN_HASH_FALLBACK = 'fdece767d';
+
+    // Mật khẩu đăng nhập (1108)
+    const PIN_HASH = 'e52970b369047515d3dd25be5bdcd9bd10e0cfec7801248c9d7de596ff2df504';
+    const PIN_HASH_FALLBACK = 'fdece82f7';
+
+    // Mật khẩu xóa dữ liệu (10032000)
+    const DELETE_PIN_HASH = 'a34d7e85c4327364a66a5746b6a8ffb97a0d26cae27eb40403a17a31803942c2';
+    const DELETE_PIN_HASH_FALLBACK = 'ff5fa1a3f';
 
     let chatUnlocked = false;
     let chatListenerStarted = false;
@@ -605,15 +611,15 @@
       return 'f' + h.toString(16);
     }
 
-    async function verifyPinPrompt(actionText) {
-      const inputPin = prompt(actionText || 'Vui lòng nhập mật khẩu 4 số để xác nhận:');
+    async function verifyDeletePinPrompt(actionText) {
+      const inputPin = prompt(actionText || 'Vui lòng nhập mật khẩu xóa dữ liệu:');
       if (!inputPin) return false;
       try {
         const h = await hashPin(inputPin.trim());
-        if (h === PIN_HASH || h === PIN_HASH_FALLBACK) {
+        if (h === DELETE_PIN_HASH || h === DELETE_PIN_HASH_FALLBACK) {
           return true;
         } else {
-          alert('Sai mật khẩu!');
+          alert('Sai mật khẩu xóa dữ liệu!');
           return false;
         }
       } catch (err) {
@@ -715,7 +721,7 @@
 
     /* ================= XÓA TẤT CẢ DỮ LIỆU CŨ ================= */
     async function confirmClearAll() {
-      const isAuth = await verifyPinPrompt('Nhập mật khẩu để XÓA TẤT CẢ tin nhắn:');
+      const isAuth = await verifyDeletePinPrompt('Nhập mật khẩu xóa dữ liệu (10032000) để XÓA TẤT CẢ:');
       if (!isAuth) return;
 
       if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử chat không? Hành động này không thể hoàn tác! 🗑️')) {
@@ -942,7 +948,7 @@
         del.textContent = 'Xóa';
         del.addEventListener('click', async function(e) {
           e.stopPropagation();
-          const isAuth = await verifyPinPrompt('Nhập mật khẩu để XÓA tin nhắn này:');
+          const isAuth = await verifyDeletePinPrompt('Nhập mật khẩu xóa (10032000) để XÓA tin nhắn này:');
           if (isAuth) {
             db.ref('notes/' + item.id).remove();
           }
