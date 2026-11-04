@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
-  <title>Bubu & Dudu Hugs 🐾</title>
+  <title>Bubu & Dudu Hugs 🐾 (v4.11)</title>
   <style>
     * {
       box-sizing: border-box;
@@ -78,6 +78,13 @@
       transform: scale(0.95);
     }
 
+    .version-tag {
+      font-size: 0.72rem;
+      color: #b08968;
+      margin-top: 8px;
+      font-weight: bold;
+    }
+
     /* ============ KHUNG CHAT ============ */
     .chat-overlay {
       display: none;
@@ -118,10 +125,22 @@
       padding: 2px 8px;
     }
 
-    .chat-title {
+    .chat-title-box {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-title {
       font-weight: bold;
       font-size: 1.05rem;
+      line-height: 1.1;
+    }
+
+    .chat-subtitle {
+      font-size: 0.68rem;
+      opacity: 0.85;
+      margin-top: 1px;
     }
 
     .header-actions {
@@ -480,13 +499,17 @@
       <img id="bubuGif" src="bubu1.gif" alt="">
     </div>
     <button id="chatBtn" class="btn-action" onclick="openChat()">Ấn để chat với nhà gấu 🐾</button>
+    <div class="version-tag">Version 4.11</div>
   </div>
 
   <!-- Khung chat toàn màn hình -->
   <div id="chatOverlay" class="chat-overlay">
     <div class="chat-header">
       <button class="chat-back" onclick="closeChat()" aria-label="Quay lại">‹</button>
-      <div class="chat-title">Bubu & Dudu 💕</div>
+      <div class="chat-title-box">
+        <div class="chat-title">Bubu & Dudu 💕</div>
+        <div class="chat-subtitle">Version 4.11</div>
+      </div>
       <div class="header-actions">
         <button id="clearAllBtn" class="btn-clear-all" onclick="confirmClearAll()" style="display: none;">🗑️ Xóa tất cả</button>
         <div id="meSwitch" class="me-switch" style="display: none;">
