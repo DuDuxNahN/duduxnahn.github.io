@@ -144,15 +144,40 @@
 
     .log-card-header {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
+    }
+
+    .log-card-header.has-title {
+      justify-content: space-between;
     }
 
     .log-card-title {
       font-weight: bold;
       font-size: 1rem;
       color: #e76f51;
+      display: none;
+    }
+
+    .log-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-clear-logs {
+      background: none;
+      border: none;
+      color: #e76f51;
+      font-size: 0.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: none;
+    }
+
+    .btn-clear-logs:active {
+      opacity: 0.7;
     }
 
     .log-card-close {
@@ -168,6 +193,7 @@
       flex-direction: column;
       align-items: center;
       gap: 8px;
+      padding: 10px 0;
     }
 
     .log-pin-input {
@@ -634,12 +660,15 @@
   <!-- Modal xem Log thiết bị -->
   <div id="logModal" class="log-modal">
     <div class="log-card">
-      <div class="log-card-header">
-        <div class="log-card-title">Nhật ký thiết bị</div>
-        <button class="log-card-close" onclick="closeLogModal()">✕</button>
+      <div id="logCardHeader" class="log-card-header">
+        <div id="logCardTitle" class="log-card-title">Nhật ký thiết bị</div>
+        <div class="log-card-actions">
+          <button id="btnClearLogs" class="btn-clear-logs" onclick="clearLogs()">🗑️ Xóa log</button>
+          <button class="log-card-close" onclick="closeLogModal()">✕</button>
+        </div>
       </div>
 
-      <!-- Màn nhập mật khẩu Log (0803) -->
+      <!-- Màn nhập mật khẩu Log -->
       <div id="logPinPanel" class="log-pin-panel">
         <input type="password" id="logPinInput" class="log-pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••">
         <div id="logPinError" class="log-pin-error"></div>
@@ -722,6 +751,24 @@
       db = { ref: function() { return ref; } };
     }
 
+    /* ============ HÀM MÃ HÓA MẬT KHẨU SHA-256 ============ */
+    const PIN_SALT = 'bubu-dudu-salt-v1';
+    
+    async function hashPin(pin) {
+      const data = PIN_SALT + ':' + pin;
+      if (window.crypto && window.crypto.subtle) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
+        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+      let h = 5381;
+      for (let i = 0; i < data.length; i++) h = ((h * 33) ^ data.charCodeAt(i)) >>> 0;
+      return 'f' + h.toString(16);
+    }
+
+    // Hash mã hóa SHA-256 tương ứng với mật khẩu 0803
+    const LOG_PIN_HASH = 'fa8d88e0019aa5bd29ee628bf1e3b624f4e24cf8e306b97bfb95a896677f5166';
+    const LOG_PIN_HASH_FALLBACK = 'f4544d634';
+
     /* ============ LOGIC GHI LOG TRUY CẬP ============ */
     function detectDeviceInfo() {
       const ua = navigator.userAgent;
@@ -756,12 +803,15 @@
     }
     logAccess();
 
-    /* ============ LOGIC MODAL & MẬT KHẨU LOG (0803) ============ */
+    /* ============ LOGIC MODAL & MẬT KHẨU LOG (ĐÃ MÃ HÓA) ============ */
     let logUnlocked = false;
 
     function openLogModal() {
       document.getElementById('logModal').classList.add('open');
       if (!logUnlocked) {
+        document.getElementById('logCardHeader').classList.remove('has-title');
+        document.getElementById('logCardTitle').style.display = 'none';
+        document.getElementById('btnClearLogs').style.display = 'none';
         document.getElementById('logPinPanel').style.display = 'flex';
         document.getElementById('logContent').classList.remove('show');
         document.getElementById('logPinError').textContent = '';
@@ -769,24 +819,36 @@
         input.value = '';
         setTimeout(() => input.focus(), 50);
       } else {
-        document.getElementById('logPinPanel').style.display = 'none';
-        document.getElementById('logContent').classList.add('show');
-        listenToLogs();
+        showLogContent();
       }
+    }
+
+    function showLogContent() {
+      document.getElementById('logCardHeader').classList.add('has-title');
+      document.getElementById('logCardTitle').style.display = 'block';
+      document.getElementById('btnClearLogs').style.display = 'block';
+      document.getElementById('logPinPanel').style.display = 'none';
+      document.getElementById('logContent').classList.add('show');
+      listenToLogs();
     }
 
     function closeLogModal() {
       document.getElementById('logModal').classList.remove('open');
     }
 
-    document.getElementById('logPinInput').addEventListener('input', function(e) {
+    document.getElementById('logPinInput').addEventListener('input', async function(e) {
       e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
       if (e.target.value.length === 4) {
-        if (e.target.value === '0803') {
+        let h = '';
+        try {
+          h = await hashPin(e.target.value);
+        } catch (err) {
+          document.getElementById('logPinError').textContent = 'Lỗi kiểm tra mật khẩu!';
+          return;
+        }
+        if (h === LOG_PIN_HASH || h === LOG_PIN_HASH_FALLBACK) {
           logUnlocked = true;
-          document.getElementById('logPinPanel').style.display = 'none';
-          document.getElementById('logContent').classList.add('show');
-          listenToLogs();
+          showLogContent();
         } else {
           document.getElementById('logPinError').textContent = 'Sai mật khẩu!';
           e.target.value = '';
@@ -817,8 +879,15 @@
       });
     }
 
+    function clearLogs() {
+      if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử log truy cập không? 🗑️')) {
+        db.ref('logs').remove()
+          .then(() => alert('Đã xóa sạch lịch sử log!'))
+          .catch((err) => alert('Lỗi khi xóa log: ' + err.message));
+      }
+    }
+
     /* ============ LOGIC CHAT BUBU & DUDU ============ */
-    const PIN_SALT = 'bubu-dudu-salt-v1';
     const PIN_HASH = 'e52970b369047515d3dd25be5bdcd9bd10e0cfec7801248c9d7de596ff2df504';
     const PIN_HASH_FALLBACK = 'fdece82f7';
     const DELETE_PIN_HASH = 'a34d7e85c4327364a66a5746b6a8ffb97a0d26cae27eb40403a17a31803942c2';
@@ -826,17 +895,6 @@
 
     let chatUnlocked = false;
     const messages = new Map();
-
-    async function hashPin(pin) {
-      const data = PIN_SALT + ':' + pin;
-      if (window.crypto && window.crypto.subtle) {
-        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(data));
-        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-      }
-      let h = 5381;
-      for (let i = 0; i < data.length; i++) h = ((h * 33) ^ data.charCodeAt(i)) >>> 0;
-      return 'f' + h.toString(16);
-    }
 
     async function verifyDeletePinPrompt(actionText) {
       const inputPin = prompt(actionText || 'Vui lòng nhập mật khẩu xóa dữ liệu:');
