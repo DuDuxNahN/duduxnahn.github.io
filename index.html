@@ -78,11 +78,6 @@
       transform: scale(0.95);
     }
 
-    .btn-log {
-      background-color: #2a9d8f;
-      box-shadow: 0 4px 12px rgba(42, 157, 143, 0.4);
-    }
-
     .version-tag {
       font-size: 0.72rem;
       color: #b08968;
@@ -90,22 +85,120 @@
       font-weight: bold;
     }
 
-    /* ============ BẢNG XEM LOG THIẾT BỊ ============ */
-    .log-panel {
+    /* ============ NÚT 'T' Ở GÓC DƯỚI ============ */
+    .btn-t-corner {
+      position: fixed;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      right: max(16px, env(safe-area-inset-right));
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background-color: rgba(244, 162, 97, 0.5);
+      color: #9c5a2e;
+      border: 1px solid #f4a261;
+      font-size: 0.85rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: 0.2s;
+    }
+
+    .btn-t-corner:active {
+      transform: scale(0.9);
+      background-color: #e76f51;
+      color: white;
+    }
+
+    /* ============ POPUP XEM LOG ============ */
+    .log-modal {
       display: none;
-      margin-top: 12px;
-      background: #fff6ef;
-      border: 1.5px dashed #f4a261;
-      border-radius: 12px;
-      padding: 10px;
-      max-height: 200px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100dvh;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .log-modal.open {
+      display: flex;
+    }
+
+    .log-card {
+      background: white;
+      border-radius: 20px;
+      padding: 16px;
+      width: 320px;
+      max-width: 90vw;
+      border: 3px solid #f4a261;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      position: relative;
+    }
+
+    .log-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .log-card-title {
+      font-weight: bold;
+      font-size: 1rem;
+      color: #e76f51;
+    }
+
+    .log-card-close {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: #b08968;
+      cursor: pointer;
+    }
+
+    .log-pin-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .log-pin-input {
+      width: 130px;
+      padding: 8px;
+      border: 2px solid #f4a261;
+      border-radius: 10px;
+      outline: none;
+      text-align: center;
+      font-size: 1.4rem;
+      letter-spacing: 0.4rem;
+      text-indent: 0.4rem;
+      font-family: inherit;
+    }
+
+    .log-pin-error {
+      font-size: 0.78rem;
+      color: #e76f51;
+      font-weight: bold;
+      min-height: 1.1em;
+    }
+
+    .log-content {
+      display: none;
+      max-height: 250px;
       overflow-y: auto;
       text-align: left;
       font-size: 0.78rem;
-      color: #333;
     }
 
-    .log-panel.show {
+    .log-content.show {
       display: block;
     }
 
@@ -231,7 +324,7 @@
       color: #e76f51;
     }
 
-    /* Màn nhập mật khẩu */
+    /* Màn nhập mật khẩu chat */
     .pin-panel {
       flex: 1;
       min-height: 0;
@@ -532,14 +625,31 @@
       <img id="bubuGif" src="bubu1.gif" alt="">
     </div>
     <button id="chatBtn" class="btn-action" onclick="openChat()">Ấn để chat với nhà gấu 🐾</button>
-    <button id="toggleLogBtn" class="btn-action btn-log" onclick="toggleLogs()">📊 Nhật ký thiết bị truy cập</button>
-    
-    <!-- Khung hiển thị Log -->
-    <div id="logPanel" class="log-panel">
-      <div id="logList">Đang tải nhật ký...</div>
-    </div>
-
     <div class="version-tag">Version 4.11</div>
+  </div>
+
+  <!-- Nút T nhỏ ở góc dưới màn hình -->
+  <button class="btn-t-corner" onclick="openLogModal()">T</button>
+
+  <!-- Modal xem Log thiết bị -->
+  <div id="logModal" class="log-modal">
+    <div class="log-card">
+      <div class="log-card-header">
+        <div class="log-card-title">Nhật ký thiết bị</div>
+        <button class="log-card-close" onclick="closeLogModal()">✕</button>
+      </div>
+
+      <!-- Màn nhập mật khẩu Log (0803) -->
+      <div id="logPinPanel" class="log-pin-panel">
+        <input type="password" id="logPinInput" class="log-pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="••••">
+        <div id="logPinError" class="log-pin-error"></div>
+      </div>
+
+      <!-- Nội dung Log -->
+      <div id="logContent" class="log-content">
+        <div id="logList">Đang tải nhật ký...</div>
+      </div>
+    </div>
   </div>
 
   <!-- Khung chat toàn màn hình -->
@@ -612,19 +722,17 @@
       db = { ref: function() { return ref; } };
     }
 
-    /* ============ LOGIC GHI & HIỂN THỊ LOG TRUY CẬP ============ */
+    /* ============ LOGIC GHI LOG TRUY CẬP ============ */
     function detectDeviceInfo() {
       const ua = navigator.userAgent;
       let os = "Không rõ";
       let browser = "Trình duyệt khác";
 
-      // Nhận diện HĐH / Điện thoại
       if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS (iPhone/iPad)";
       else if (/Android/i.test(ua)) os = "Android";
       else if (/Windows/i.test(ua)) os = "Windows PC";
       else if (/Macintosh/i.test(ua)) os = "macOS";
 
-      // Nhận diện Trình duyệt
       if (/FBAN|FBAV/i.test(ua)) browser = "Facebook App";
       else if (/Zalo/i.test(ua)) browser = "Zalo App";
       else if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = "Chrome";
@@ -635,7 +743,6 @@
       return `${os} · ${browser}`;
     }
 
-    // Tự động lưu log khi có người mở trang web
     function logAccess() {
       try {
         const info = detectDeviceInfo();
@@ -649,14 +756,43 @@
     }
     logAccess();
 
-    // Bật / Tắt giao diện xem Log ở màn hình chính
-    function toggleLogs() {
-      const panel = document.getElementById('logPanel');
-      panel.classList.toggle('show');
-      if (panel.classList.contains('show')) {
+    /* ============ LOGIC MODAL & MẬT KHẨU LOG (0803) ============ */
+    let logUnlocked = false;
+
+    function openLogModal() {
+      document.getElementById('logModal').classList.add('open');
+      if (!logUnlocked) {
+        document.getElementById('logPinPanel').style.display = 'flex';
+        document.getElementById('logContent').classList.remove('show');
+        document.getElementById('logPinError').textContent = '';
+        const input = document.getElementById('logPinInput');
+        input.value = '';
+        setTimeout(() => input.focus(), 50);
+      } else {
+        document.getElementById('logPinPanel').style.display = 'none';
+        document.getElementById('logContent').classList.add('show');
         listenToLogs();
       }
     }
+
+    function closeLogModal() {
+      document.getElementById('logModal').classList.remove('open');
+    }
+
+    document.getElementById('logPinInput').addEventListener('input', function(e) {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+      if (e.target.value.length === 4) {
+        if (e.target.value === '0803') {
+          logUnlocked = true;
+          document.getElementById('logPinPanel').style.display = 'none';
+          document.getElementById('logContent').classList.add('show');
+          listenToLogs();
+        } else {
+          document.getElementById('logPinError').textContent = 'Sai mật khẩu!';
+          e.target.value = '';
+        }
+      }
+    });
 
     function listenToLogs() {
       db.ref('logs').limitToLast(20).on('value', function(snapshot) {
@@ -719,7 +855,6 @@
       }
     }
 
-    // Tự động quét và hiển thị toàn bộ snapshot từ Firebase
     try {
       db.ref('notes').on('value', function(snapshot) {
         messages.clear();
