@@ -765,7 +765,7 @@
       return 'f' + h.toString(16);
     }
 
-    // Chuỗi Hash băm chính xác cho mật khẩu 0803
+    // Hash mã hóa SHA-256 ứng với mật khẩu 0803
     const LOG_PIN_HASH = 'ef499a560d7ac0a21c2c11d3398d605f2ad536e310c2914cad3a50b7771e4ab1';
     const LOG_PIN_HASH_FALLBACK = 'fdecdd054';
 
@@ -1137,7 +1137,7 @@
         const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} · ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
         const time = document.createElement('span');
         time.textContent = timeStr;
- meta.appendChild(time);
+        meta.appendChild(time);
 
         const del = document.createElement('button');
         del.className = 'msg-delete';
