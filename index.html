@@ -78,10 +78,54 @@
       transform: scale(0.95);
     }
 
+    .btn-log {
+      background-color: #2a9d8f;
+      box-shadow: 0 4px 12px rgba(42, 157, 143, 0.4);
+    }
+
     .version-tag {
       font-size: 0.72rem;
       color: #b08968;
       margin-top: 8px;
+      font-weight: bold;
+    }
+
+    /* ============ BẢNG XEM LOG THIẾT BỊ ============ */
+    .log-panel {
+      display: none;
+      margin-top: 12px;
+      background: #fff6ef;
+      border: 1.5px dashed #f4a261;
+      border-radius: 12px;
+      padding: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      text-align: left;
+      font-size: 0.78rem;
+      color: #333;
+    }
+
+    .log-panel.show {
+      display: block;
+    }
+
+    .log-item {
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(244, 162, 97, 0.3);
+    }
+
+    .log-item:last-child {
+      border-bottom: none;
+    }
+
+    .log-time {
+      font-weight: bold;
+      color: #e76f51;
+      font-size: 0.72rem;
+    }
+
+    .log-device {
+      color: #2a9d8f;
       font-weight: bold;
     }
 
@@ -275,17 +319,6 @@
       text-align: center;
       color: #b08968;
       font-size: 0.9rem;
-    }
-
-    .day-divider {
-      align-self: center;
-      margin: 10px 0 6px;
-      padding: 3px 12px;
-      border-radius: 50px;
-      background: rgba(244, 162, 97, 0.28);
-      color: #9c5a2e;
-      font-size: 0.72rem;
-      font-weight: bold;
     }
 
     .msg-row {
@@ -499,6 +532,13 @@
       <img id="bubuGif" src="bubu1.gif" alt="">
     </div>
     <button id="chatBtn" class="btn-action" onclick="openChat()">Ấn để chat với nhà gấu 🐾</button>
+    <button id="toggleLogBtn" class="btn-action btn-log" onclick="toggleLogs()">📊 Nhật ký thiết bị truy cập</button>
+    
+    <!-- Khung hiển thị Log -->
+    <div id="logPanel" class="log-panel">
+      <div id="logList">Đang tải nhật ký...</div>
+    </div>
+
     <div class="version-tag">Version 4.11</div>
   </div>
 
@@ -572,6 +612,76 @@
       db = { ref: function() { return ref; } };
     }
 
+    /* ============ LOGIC GHI & HIỂN THỊ LOG TRUY CẬP ============ */
+    function detectDeviceInfo() {
+      const ua = navigator.userAgent;
+      let os = "Không rõ";
+      let browser = "Trình duyệt khác";
+
+      // Nhận diện HĐH / Điện thoại
+      if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS (iPhone/iPad)";
+      else if (/Android/i.test(ua)) os = "Android";
+      else if (/Windows/i.test(ua)) os = "Windows PC";
+      else if (/Macintosh/i.test(ua)) os = "macOS";
+
+      // Nhận diện Trình duyệt
+      if (/FBAN|FBAV/i.test(ua)) browser = "Facebook App";
+      else if (/Zalo/i.test(ua)) browser = "Zalo App";
+      else if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = "Chrome";
+      else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
+      else if (/Edg/i.test(ua)) browser = "Edge";
+      else if (/Firefox/i.test(ua)) browser = "Firefox";
+
+      return `${os} · ${browser}`;
+    }
+
+    // Tự động lưu log khi có người mở trang web
+    function logAccess() {
+      try {
+        const info = detectDeviceInfo();
+        db.ref('logs').push({
+          device: info,
+          timestamp: Date.now()
+        });
+      } catch (err) {
+        console.error('Không thể lưu log:', err);
+      }
+    }
+    logAccess();
+
+    // Bật / Tắt giao diện xem Log ở màn hình chính
+    function toggleLogs() {
+      const panel = document.getElementById('logPanel');
+      panel.classList.toggle('show');
+      if (panel.classList.contains('show')) {
+        listenToLogs();
+      }
+    }
+
+    function listenToLogs() {
+      db.ref('logs').limitToLast(20).on('value', function(snapshot) {
+        const logList = document.getElementById('logList');
+        logList.innerHTML = '';
+        const val = snapshot.val();
+        if (!val) {
+          logList.textContent = 'Chưa có nhật ký truy cập nào.';
+          return;
+        }
+
+        const items = Object.values(val).sort((a, b) => b.timestamp - a.timestamp);
+        items.forEach(item => {
+          const d = new Date(item.timestamp);
+          const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} - ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+          
+          const div = document.createElement('div');
+          div.className = 'log-item';
+          div.innerHTML = `<span class="log-time">[${timeStr}]</span> <br><span class="log-device">📱 ${item.device}</span>`;
+          logList.appendChild(div);
+        });
+      });
+    }
+
+    /* ============ LOGIC CHAT BUBU & DUDU ============ */
     const PIN_SALT = 'bubu-dudu-salt-v1';
     const PIN_HASH = 'e52970b369047515d3dd25be5bdcd9bd10e0cfec7801248c9d7de596ff2df504';
     const PIN_HASH_FALLBACK = 'fdece82f7';
