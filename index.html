@@ -1007,7 +1007,7 @@
 
     function setMe(name) {
       me = name;
-      try { localStorage.getItem('bubuChatMe', name); } catch (err) {}
+      try { localStorage.setItem('bubuChatMe', name); } catch (err) {}
       applyMe();
       renderChat(false);
     }
@@ -1036,7 +1036,7 @@
     });
 
     function clearAttachment() {
-      mediaFile.value = giới hạn = '';
+      mediaFile.value = '';
       document.getElementById('attachPreview').classList.remove('show');
     }
 
