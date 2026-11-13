@@ -1200,33 +1200,29 @@
         async () => {
           const d = await fetchJsonWithTimeout('https://ipwho.is/', 4000);
           if (!d || d.success === false || !d.city) return null;
-          return { ip: d.ip || '', isp: (d.connection && (d.connection.isp || d.connection.org)) || '',
-                   location: joinParts([d.city, d.region, d.country]) };
+          return { location: joinParts([d.city, d.region, d.country]) };
         },
         async () => {
           const d = await fetchJsonWithTimeout('https://get.geojs.io/v1/ip/geo.json', 4000);
           if (!d || !d.city) return null;
-          return { ip: d.ip || '', isp: d.organization_name || '',
-                   location: joinParts([d.city, d.region, d.country]) };
+          return { location: joinParts([d.city, d.region, d.country]) };
         },
         async () => {
           const d = await fetchJsonWithTimeout('https://ipapi.co/json/', 4000);
           if (!d || d.error || !d.city) return null;
-          return { ip: d.ip || '', isp: d.org || '',
-                   location: joinParts([d.city, d.region, d.country_name]) };
+          return { location: joinParts([d.city, d.region, d.country_name]) };
         }
       ];
       try {
         return await firstSuccess(apis);
       } catch (e) {}
 
-      // Dự phòng: Cloudflare ít bị chặn nhưng chỉ biết IP + quốc gia
+      // Dự phòng: Cloudflare ít bị chặn nhưng chỉ biết quốc gia
       try {
         const txt = await fetchJsonWithTimeout('https://www.cloudflare.com/cdn-cgi/trace', 4000, true);
-        const ip = (txt.match(/^ip=(.+)$/m) || [])[1] || '';
         const loc = (txt.match(/^loc=(.+)$/m) || [])[1] || '';
-        if (ip || loc) {
-          return { ip: ip.trim(), isp: '', location: loc ? `Không rõ thành phố (${loc.trim()})` : '' };
+        if (loc) {
+          return { location: `Không rõ thành phố (${loc.trim()})` };
         }
       } catch (e) {}
       return null;
@@ -1246,8 +1242,6 @@
           browserVersion: info.browserVersion,
           os: info.os,
           location: '',
-          ip: '',
-          isp: '',
           deviceId: getDeviceId(),
           visitNo: nextVisitNo(),
           rawUserAgent: info.rawUserAgent,
@@ -1270,8 +1264,6 @@
         if (geo) {
           const upd = {};
           if (geo.location) upd.location = geo.location;
-          if (geo.ip) upd.ip = geo.ip;
-          if (geo.isp) upd.isp = geo.isp;
           if (Object.keys(upd).length) newRef.update(upd);
         }
       } catch (err) {
@@ -1418,8 +1410,6 @@
           const locationName = item.location ? `📍 ${item.location}` : '📍 Không rõ vị trí';
 
           const extraBits = [];
-          if (item.ip) extraBits.push('IP ' + item.ip);
-          if (item.isp) extraBits.push(item.isp);
           if (item.deviceId) extraBits.push('Máy #' + String(item.deviceId).slice(0, 6) + (item.visitNo ? ' · lần ' + item.visitNo : ''));
           const hwBits = [];
           if (item.screen) hwBits.push(item.screen);
