@@ -769,30 +769,111 @@
     const LOG_PIN_HASH = 'ef499a560d7ac0a21c2c11d3398d605f2ad536e310c2914cad3a50b7771e4ab1';
     const LOG_PIN_HASH_FALLBACK = 'fdecdd054';
 
-    /* ============ LOGIC GHI LOG TRUY CẬP ============ */
-    function detectDeviceInfo() {
-      const ua = navigator.userAgent;
-      let os = "Không rõ";
-      let browser = "Trình duyệt khác";
+    /* ============ LOGIC GHI LOG TRUY CẬP (NÂNG CẤP) ============ */
+    const DEVICE_MODELS = {
+      '22071212AG': 'Xiaomi 12T',
+      '22081212UG': 'Xiaomi 12T Pro',
+      '23078PND5G': 'Xiaomi 13T',
+      '2306EPN60G': 'Xiaomi 13T Pro',
+      '2406APNFAG': 'Xiaomi 14T',
+      '2407FPN8EG': 'Xiaomi 14T Pro',
+      '2201123G': 'Xiaomi 12',
+      '2211133G': 'Xiaomi 13',
+      '23127PN0CG': 'Xiaomi 14',
+      'SM-S911B': 'Samsung Galaxy S23',
+      'SM-S918B': 'Samsung Galaxy S23 Ultra',
+      'SM-S921B': 'Samsung Galaxy S24',
+      'SM-S928B': 'Samsung Galaxy S24 Ultra',
+      'SM-A546E': 'Samsung Galaxy A54',
+      'SM-A556E': 'Samsung Galaxy A55'
+    };
 
-      if (/iPhone|iPad|iPod/i.test(ua)) os = "iOS (iPhone/iPad)";
-      else if (/Android/i.test(ua)) os = "Android";
-      else if (/Windows/i.test(ua)) os = "Windows PC";
-      else if (/Macintosh/i.test(ua)) os = "macOS";
+    function guessIPhoneModel() {
+      const w = Math.min(window.screen.width, window.screen.height);
+      const h = Math.max(window.screen.width, window.screen.height);
+      const dpr = window.devicePixelRatio || 1;
+      const res = `${w}x${h}@${dpr}`;
 
-      if (/FBAN|FBAV/i.test(ua)) browser = "Facebook App";
-      else if (/Zalo/i.test(ua)) browser = "Zalo App";
-      else if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = "Chrome";
-      else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = "Safari";
-      else if (/Edg/i.test(ua)) browser = "Edge";
-      else if (/Firefox/i.test(ua)) browser = "Firefox";
-
-      return `${os} · ${browser}`;
+      const iosMap = {
+        '375x667@2': 'iPhone SE / 6s / 7 / 8',
+        '414x736@3': 'iPhone 6s+ / 7+ / 8+',
+        '375x812@3': 'iPhone X / XS / 11 Pro / 12 mini / 13 mini',
+        '414x896@2': 'iPhone XR / 11',
+        '414x896@3': 'iPhone XS Max / 11 Pro Max',
+        '390x844@3': 'iPhone 12 / 12 Pro / 13 / 13 Pro / 14',
+        '428x926@3': 'iPhone 12 Pro Max / 13 Pro Max / 14 Plus',
+        '393x852@3': 'iPhone 14 Pro / 15 / 15 Pro / 16',
+        '430x932@3': 'iPhone 14 Pro Max / 15 Plus / 15 Pro Max / 16 Plus',
+        '402x874@3': 'iPhone 16 Pro',
+        '440x956@3': 'iPhone 16 Pro Max'
+      };
+      return iosMap[res] || 'iPhone';
     }
 
-    function logAccess() {
+    async function detectDeviceInfo() {
+      const ua = navigator.userAgent || '';
+      let deviceName = 'Thiết bị không rõ';
+      let browser = 'Trình duyệt khác';
+
+      // 1. NHẬN DIỆN THIẾT BỊ & HỆ ĐIỀU HÀNH
+      if (/iPhone/i.test(ua)) {
+        deviceName = guessIPhoneModel();
+      } else if (/iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) {
+        deviceName = 'iPad';
+      } else if (/Android/i.test(ua)) {
+        let model = '';
+        if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+          try {
+            const hints = await navigator.userAgentData.getHighEntropyValues(['model', 'platformVersion']);
+            if (hints.model) model = hints.model.trim();
+          } catch (e) {}
+        }
+        if (!model) {
+          const match = ua.match(/Android[^;]+;\s*([^)]+)\)/i);
+          if (match && match[1]) {
+            model = match[1].replace(/Build\/.*$/i, '').trim();
+          }
+        }
+        if (model && model !== 'K') {
+          deviceName = DEVICE_MODELS[model] ? `${DEVICE_MODELS[model]} (${model})` : `Android (${model})`;
+        } else {
+          deviceName = 'Điện thoại Android';
+        }
+      } else if (/Windows/i.test(ua)) {
+        deviceName = 'Windows PC';
+      } else if (/Macintosh/i.test(ua)) {
+        deviceName = 'MacBook / macOS';
+      } else if (/Linux/i.test(ua)) {
+        deviceName = 'Linux PC';
+      }
+
+      // 2. NHẬN DIỆN TRÌNH DUYỆT
+      let isBrave = false;
+      if (navigator.brave && typeof navigator.brave.isBrave === 'function') {
+        try {
+          isBrave = await navigator.brave.isBrave();
+        } catch (e) {}
+      }
+
+      if (/FBAN|FBAV/i.test(ua)) browser = 'Facebook App';
+      else if (/Zalo/i.test(ua)) browser = 'Zalo App';
+      else if (/Instagram/i.test(ua)) browser = 'Instagram App';
+      else if (isBrave || /Brave/i.test(ua)) browser = 'Brave';
+      else if (/CocCoc/i.test(ua)) browser = 'Cốc Cốc';
+      else if (/EdgA|EdgiOS|Edg/i.test(ua)) browser = 'Edge';
+      else if (/OPR|Opera/i.test(ua)) browser = 'Opera';
+      else if (/SamsungBrowser/i.test(ua)) browser = 'Samsung Internet';
+      else if (/Firefox|FxiOS/i.test(ua)) browser = 'Firefox';
+      else if (/CriOS/i.test(ua)) browser = 'Chrome (iOS)';
+      else if (/Chrome/i.test(ua)) browser = 'Chrome';
+      else if (/Safari/i.test(ua)) browser = 'Safari';
+
+      return `${deviceName} · ${browser}`;
+    }
+
+    async function logAccess() {
       try {
-        const info = detectDeviceInfo();
+        const info = await detectDeviceInfo();
         db.ref('logs').push({
           device: info,
           timestamp: Date.now()
