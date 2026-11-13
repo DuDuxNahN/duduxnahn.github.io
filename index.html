@@ -1145,22 +1145,7 @@
       };
     }
 
-    /* ----- Mã thiết bị bền vững để nhận ra "cùng một máy" ----- */
-    function getDeviceId() {
-      try {
-        let id = localStorage.getItem('bubuDeviceId');
-        if (!id) {
-          id = (window.crypto && crypto.randomUUID)
-            ? crypto.randomUUID()
-            : 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
-          localStorage.setItem('bubuDeviceId', id);
-        }
-        return id;
-      } catch (e) {
-        return '';
-      }
-    }
-
+    /* ----- Đếm số lần truy cập của trình duyệt này ----- */
     function nextVisitNo() {
       try {
         const n = (parseInt(localStorage.getItem('bubuVisitNo'), 10) || 0) + 1;
@@ -1229,6 +1214,18 @@
     }
 
     let currentLogKey = null;
+    let logExists = false;
+    let logWatchedKey = null;
+
+    // Theo dõi log hiện tại: nếu bị xóa thì không ghi đè lại (tránh tạo "log ma" thiếu thông tin)
+    function watchLog(key) {
+      if (!key || logWatchedKey === key) return;
+      logWatchedKey = key;
+      logExists = false;
+      try {
+        db.ref('logs/' + key).on('value', function(snap) { logExists = snap.exists(); });
+      } catch (e) {}
+    }
     let chatSessionStartTime = null;
 
     async function logAccess() {
@@ -1242,22 +1239,17 @@
           browserVersion: info.browserVersion,
           os: info.os,
           location: '',
-          deviceId: getDeviceId(),
           visitNo: nextVisitNo(),
           rawUserAgent: info.rawUserAgent,
           rawModel: info.rawModel,
           screen: info.screen,
           platform: info.platform,
-          timezone: info.timezone,
-          language: info.language,
-          cores: info.cores,
-          memory: info.memory,
-          touch: info.touch,
           viewedChat: false,
           durationSeconds: 0,
           timestamp: Date.now()
         });
         currentLogKey = newRef.key;
+        watchLog(currentLogKey);
         try { sessionStorage.setItem('bubuLogKey', currentLogKey); } catch(e) {}
 
         const geo = await fetchGeoInfo();
@@ -1273,7 +1265,7 @@
     logAccess();
 
     function updateDurationOnServer() {
-      if (!currentLogKey || !chatSessionStartTime) return;
+      if (!currentLogKey || !chatSessionStartTime || !logExists) return;
       const elapsedSec = Math.floor((Date.now() - chatSessionStartTime) / 1000);
       if (elapsedSec > 0) {
         try {
@@ -1387,9 +1379,8 @@
                            .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
         items.forEach(item => {
-          const ts = item.timestamp || Date.now();
-          const d = new Date(ts);
-          const timeStr = !isNaN(d.getTime()) ? `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} - ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}` : '00:00 - --/--/----';
+          const d = new Date(item.timestamp || NaN);
+          const timeStr = !isNaN(d.getTime()) ? `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} - ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}` : 'Không rõ thời gian (log lỗi, có thể xóa)';
           
           const div = document.createElement('div');
           div.className = 'log-item';
@@ -1408,15 +1399,6 @@
           }
           const osName = inferOsFromLegacyLog(item);
           const locationName = item.location ? `📍 ${item.location}` : '📍 Không rõ vị trí';
-
-          const extraBits = [];
-          if (item.deviceId) extraBits.push('Máy #' + String(item.deviceId).slice(0, 6) + (item.visitNo ? ' · lần ' + item.visitNo : ''));
-          const hwBits = [];
-          if (item.screen) hwBits.push(item.screen);
-          if (item.timezone) hwBits.push(item.timezone);
-          if (item.language) hwBits.push(item.language);
-          if (item.cores) hwBits.push(item.cores + ' nhân');
-          if (item.memory) hwBits.push('RAM≥' + item.memory + 'GB');
 
           // Dùng textContent / DOM API thay cho innerHTML để chống chèn mã độc từ dữ liệu log
           const mk = function(tag, cls, text) {
@@ -1437,8 +1419,7 @@
           if (item.viewedChat) div.appendChild(mk('span', 'log-status-viewed', 'ĐÃ XEM'));
           div.appendChild(mk('span', 'log-os', `⚙️ Hệ điều hành: ${osName}`));
           div.appendChild(mk('span', 'log-location', locationName));
-          if (extraBits.length) div.appendChild(mk('span', 'log-os', '🌐 ' + extraBits.join(' · ')));
-          if (hwBits.length) div.appendChild(mk('span', 'log-os', '🖥️ ' + hwBits.join(' · ')));
+          if (item.visitNo) div.appendChild(mk('span', 'log-os', `🔢 Lần truy cập: ${item.visitNo}`));
           if (item.viewedChat && item.durationSeconds > 0) {
             div.appendChild(mk('div', 'log-duration', formatDuration(item.durationSeconds)));
           }
@@ -1543,8 +1524,13 @@
         try { currentLogKey = sessionStorage.getItem('bubuLogKey'); } catch(e) {}
       }
       if (currentLogKey) {
+        const key = currentLogKey;
+        watchLog(key);
         try {
-          db.ref('logs/' + currentLogKey).update({ viewedChat: true });
+          // Chỉ đánh dấu "đã xem" khi log còn tồn tại
+          db.ref('logs/' + key + '/timestamp').once('value').then(function(snap) {
+            if (snap.exists()) db.ref('logs/' + key).update({ viewedChat: true });
+          });
         } catch (err) {
           console.error('Không thể cập nhật trạng thái đã xem:', err);
         }
