@@ -242,6 +242,19 @@
       color: #e76f51;
       font-size: 0.72rem;
     }
+    .log-delete-btn {
+      background: none;
+      border: none;
+      color: #b08968;
+      font-size: 0.72rem;
+      cursor: pointer;
+      float: right;
+      padding: 0;
+      font-weight: normal;
+    }
+    .log-delete-btn:active {
+      opacity: 0.7;
+    }
 
     .log-device {
       color: #2a9d8f;
@@ -256,7 +269,7 @@
       font-weight: bold;
       padding: 1px 6px;
       border-radius: 4px;
-      margin-left: 4px;
+      margin-left: 6px;
       vertical-align: middle;
     }
 
@@ -264,7 +277,8 @@
       font-size: 0.72rem;
       color: #d97706;
       font-weight: bold;
-      margin-top: 2px;
+      margin-top: 3px;
+      padding-left: 2px;
     }
 
     /* ============ KHUNG CHAT ============ */
@@ -787,7 +801,7 @@
     const LOG_PIN_HASH = 'ef499a560d7ac0a21c2c11d3398d605f2ad536e310c2914cad3a50b7771e4ab1';
     const LOG_PIN_HASH_FALLBACK = 'fdecdd054';
 
-    /* ============ LOGIC GHI LOG TRUY CẬP & THỜI GIAN Ở LẠI (SAU KHI ĐĂNG NHẬP) ============ */
+    /* ============ LOGIC GHI LOG TRUY CẬP & THỜI GIAN Ở LẠI (TỐI ƯU GỬI DỮ LIỆU) ============ */
     const DEVICE_MODELS = {
       '22071212AG': 'Xiaomi 12T',
       '22081212UG': 'Xiaomi 12T Pro',
@@ -923,18 +937,16 @@
     }
     logAccess();
 
-    // Hàm cập nhật thời gian ở lại lên Firebase khi rời trang hoặc ẩn tab
     function updateDurationOnServer() {
       if (!currentLogKey || !chatSessionStartTime) return;
       const elapsedSec = Math.floor((Date.now() - chatSessionStartTime) / 1000);
       if (elapsedSec > 0) {
         try {
-          // Dùng navigator.sendBeacon hoặc update trực tiếp
           db.ref('logs/' + currentLogKey).child('durationSeconds').transaction(function(currentVal) {
             return (currentVal || 0) + elapsedSec;
           });
         } catch (e) {}
-        chatSessionStartTime = Date.now(); // reset mốc tính tiếp
+        chatSessionStartTime = Date.now();
       }
     }
 
@@ -943,7 +955,7 @@
       if (document.visibilityState === 'hidden') {
         updateDurationOnServer();
       } else if (document.visibilityState === 'visible' && chatSessionStartTime) {
-        chatSessionStartTime = Date.now(); // reset khi bật lại tab
+        chatSessionStartTime = Date.now();
       }
     });
 
@@ -1038,7 +1050,7 @@
             durationHtml = `<div class="log-duration">${formatDuration(item.durationSeconds)}</div>`;
           }
 
-          div.innerHTML = `<span class="log-time">[${timeStr}]</span> <br><span class="log-device">📱 ${item.device}</span>${badgeHtml}${durationHtml}`;
+          div.innerHTML = `<span class="log-time">[${timeStr}]</span> <button class="log-delete-btn" onclick="deleteSingleLog('${item.id}')">Xóa</button><br><span class="log-device">📱 ${item.device}</span>${badgeHtml}${durationHtml}`;
           logList.appendChild(div);
         });
       });
@@ -1048,6 +1060,13 @@
       if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử log truy cập không? 🗑️')) {
         db.ref('logs').remove()
           .then(() => alert('Đã xóa sạch lịch sử log!'))
+          .catch((err) => alert('Lỗi khi xóa log: ' + err.message));
+      }
+    }
+
+    function deleteSingleLog(logId) {
+      if (confirm('Bạn có muốn xóa mục log này không?')) {
+        db.ref('logs/' + logId).remove()
           .catch((err) => alert('Lỗi khi xóa log: ' + err.message));
       }
     }
@@ -1105,7 +1124,6 @@
     }
 
     function showPinScreen() {
-      // Trước khi đóng màn hình chat, lưu lại thời gian đã xem
       updateDurationOnServer();
       chatSessionStartTime = null;
 
@@ -1128,10 +1146,8 @@
       document.getElementById('clearAllBtn').style.display = 'block';
       document.getElementById('pinInput').blur();
 
-      // Bắt đầu tính giờ ở lại xem chat
       chatSessionStartTime = Date.now();
 
-      // Đánh dấu thiết bị hiện tại đã vào xem chat trên Firebase
       if (!currentLogKey) {
         try { currentLogKey = sessionStorage.getItem('bubuLogKey'); } catch(e) {}
       }
@@ -1325,7 +1341,7 @@
         meta.appendChild(time);
 
         const del = document.createElement('button');
-        del.className, 'msg-delete'
+        del.className = 'msg-delete';
         del.textContent = 'Xóa';
         del.onclick = async function() {
           if (await verifyDeletePinPrompt('Vui lòng nhập mật khẩu xóa dữ liệu:')) {
