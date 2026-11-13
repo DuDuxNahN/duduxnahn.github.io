@@ -248,6 +248,25 @@
       font-weight: bold;
     }
 
+    .log-status-viewed {
+      display: inline-block;
+      background-color: #e76f51;
+      color: white;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 1px 6px;
+      border-radius: 4px;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+
+    .log-duration {
+      font-size: 0.72rem;
+      color: #d97706;
+      font-weight: bold;
+      margin-top: 2px;
+    }
+
     /* ============ KHUNG CHAT ============ */
     .chat-overlay {
       display: none;
@@ -747,7 +766,7 @@
       console.error('Firebase lỗi:', err);
       firebaseOk = false;
       const noop = function() { return ref; };
-      const ref = { push: noop, on: noop, remove: noop, child: noop };
+      const ref = { push: noop, on: noop, remove: noop, child: noop, update: noop, set: noop };
       db = { ref: function() { return ref; } };
     }
 
@@ -765,11 +784,10 @@
       return 'f' + h.toString(16);
     }
 
-    // Chuỗi Hash chuẩn SHA-256 cho mật khẩu 0803
     const LOG_PIN_HASH = 'ef499a560d7ac0a21c2c11d3398d605f2ad536e310c2914cad3a50b7771e4ab1';
     const LOG_PIN_HASH_FALLBACK = 'fdecdd054';
 
-    /* ============ LOGIC GHI LOG TRUY CẬP (LƯU CẢ DỮ LIỆU GỐC ĐỂ TRA CỨU) ============ */
+    /* ============ LOGIC GHI LOG TRUY CẬP & THỜI GIAN Ở LẠI (SAU KHI ĐĂNG NHẬP) ============ */
     const DEVICE_MODELS = {
       '22071212AG': 'Xiaomi 12T',
       '22081212UG': 'Xiaomi 12T Pro',
@@ -820,7 +838,6 @@
       let browser = 'Trình duyệt khác';
       let rawModel = '';
 
-      // 1. NHẬN DIỆN THIẾT BỊ & HỆ ĐIỀU HÀNH
       if (/iPhone/i.test(ua)) {
         deviceName = guessIPhoneModel();
       } else if (/iPad/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1)) {
@@ -853,7 +870,6 @@
         deviceName = 'Linux PC';
       }
 
-      // 2. NHẬN DIỆN TRÌNH DUYỆT
       let isBrave = false;
       if (navigator.brave && typeof navigator.brave.isBrave === 'function') {
         try {
@@ -883,22 +899,53 @@
       };
     }
 
+    let currentLogKey = null;
+    let chatSessionStartTime = null;
+
     async function logAccess() {
       try {
         const info = await detectDeviceInfo();
-        db.ref('logs').push({
+        const newRef = db.ref('logs').push({
           device: info.summary,
           rawUserAgent: info.rawUserAgent,
           rawModel: info.rawModel,
           screen: info.screen,
           platform: info.platform,
+          viewedChat: false,
+          durationSeconds: 0,
           timestamp: Date.now()
         });
+        currentLogKey = newRef.key;
+        try { sessionStorage.setItem('bubuLogKey', currentLogKey); } catch(e) {}
       } catch (err) {
         console.error('Không thể lưu log:', err);
       }
     }
     logAccess();
+
+    // Hàm cập nhật thời gian ở lại lên Firebase khi rời trang hoặc ẩn tab
+    function updateDurationOnServer() {
+      if (!currentLogKey || !chatSessionStartTime) return;
+      const elapsedSec = Math.floor((Date.now() - chatSessionStartTime) / 1000);
+      if (elapsedSec > 0) {
+        try {
+          // Dùng navigator.sendBeacon hoặc update trực tiếp
+          db.ref('logs/' + currentLogKey).child('durationSeconds').transaction(function(currentVal) {
+            return (currentVal || 0) + elapsedSec;
+          });
+        } catch (e) {}
+        chatSessionStartTime = Date.now(); // reset mốc tính tiếp
+      }
+    }
+
+    window.addEventListener('beforeunload', updateDurationOnServer);
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') {
+        updateDurationOnServer();
+      } else if (document.visibilityState === 'visible' && chatSessionStartTime) {
+        chatSessionStartTime = Date.now(); // reset khi bật lại tab
+      }
+    });
 
     /* ============ LOGIC MODAL & MẬT KHẨU LOG ============ */
     let logUnlocked = false;
@@ -953,6 +1000,14 @@
       }
     });
 
+    function formatDuration(totalSeconds) {
+      if (!totalSeconds || totalSeconds <= 0) return '';
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      if (mins === 0) return `⏱️ Đã ở lại: ${secs} giây`;
+      return `⏱️ Đã ở lại: ${mins} phút ${secs} giây`;
+    }
+
     function listenToLogs() {
       db.ref('logs').on('value', function(snapshot) {
         const logList = document.getElementById('logList');
@@ -963,14 +1018,27 @@
           return;
         }
 
-        const items = Object.values(val).sort((a, b) => b.timestamp - a.timestamp);
+        const items = Object.entries(val).map(entry => ({ id: entry[0], ...entry[1] }))
+                           .sort((a, b) => b.timestamp - a.timestamp);
+
         items.forEach(item => {
           const d = new Date(item.timestamp);
           const timeStr = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} - ${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
           
           const div = document.createElement('div');
           div.className = 'log-item';
-          div.innerHTML = `<span class="log-time">[${timeStr}]</span> <br><span class="log-device">📱 ${item.device}</span>`;
+          
+          let badgeHtml = '';
+          if (item.viewedChat) {
+            badgeHtml = `<span class="log-status-viewed">ĐÃ XEM</span>`;
+          }
+
+          let durationHtml = '';
+          if (item.viewedChat && item.durationSeconds > 0) {
+            durationHtml = `<div class="log-duration">${formatDuration(item.durationSeconds)}</div>`;
+          }
+
+          div.innerHTML = `<span class="log-time">[${timeStr}]</span> <br><span class="log-device">📱 ${item.device}</span>${badgeHtml}${durationHtml}`;
           logList.appendChild(div);
         });
       });
@@ -1037,6 +1105,10 @@
     }
 
     function showPinScreen() {
+      // Trước khi đóng màn hình chat, lưu lại thời gian đã xem
+      updateDurationOnServer();
+      chatSessionStartTime = null;
+
       chatUnlocked = false;
       document.getElementById('pinPanel').style.display = 'flex';
       document.getElementById('chatBody').classList.remove('open');
@@ -1056,6 +1128,21 @@
       document.getElementById('clearAllBtn').style.display = 'block';
       document.getElementById('pinInput').blur();
 
+      // Bắt đầu tính giờ ở lại xem chat
+      chatSessionStartTime = Date.now();
+
+      // Đánh dấu thiết bị hiện tại đã vào xem chat trên Firebase
+      if (!currentLogKey) {
+        try { currentLogKey = sessionStorage.getItem('bubuLogKey'); } catch(e) {}
+      }
+      if (currentLogKey) {
+        try {
+          db.ref('logs/' + currentLogKey).update({ viewedChat: true });
+        } catch (err) {
+          console.error('Không thể cập nhật trạng thái đã xem:', err);
+        }
+      }
+
       try { applyMe(); } catch (err) { console.error(err); }
       
       renderChat(true);
@@ -1067,6 +1154,7 @@
     }
 
     function closeChat() {
+      updateDurationOnServer();
       document.getElementById('chatInput').blur();
       document.getElementById('chatOverlay').classList.remove('open');
       showPinScreen();
@@ -1113,7 +1201,7 @@
       const isAuth = await verifyDeletePinPrompt('Vui lòng nhập mật khẩu xóa dữ liệu để XÓA TẤT CẢ:');
       if (!isAuth) return;
 
-      if (confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử chat không? 🗑️')) {
+      if (confirm('You sure want to clear all chat? 🗑️')) {
         db.ref('notes').remove()
           .then(() => alert('Đã xóa sạch toàn bộ dữ liệu tin nhắn cũ!'))
           .catch((err) => alert('Lỗi xóa dữ liệu: ' + err.message));
@@ -1237,7 +1325,7 @@
         meta.appendChild(time);
 
         const del = document.createElement('button');
-        del.className = 'msg-delete';
+        del.className, 'msg-delete'
         del.textContent = 'Xóa';
         del.onclick = async function() {
           if (await verifyDeletePinPrompt('Vui lòng nhập mật khẩu xóa dữ liệu:')) {
