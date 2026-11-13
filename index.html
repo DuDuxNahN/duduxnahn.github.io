@@ -769,7 +769,7 @@
     const LOG_PIN_HASH = 'ef499a560d7ac0a21c2c11d3398d605f2ad536e310c2914cad3a50b7771e4ab1';
     const LOG_PIN_HASH_FALLBACK = 'fdecdd054';
 
-    /* ============ LOGIC GHI LOG TRUY CẬP (NÂNG CẤP) ============ */
+    /* ============ LOGIC GHI LOG TRUY CẬP (LƯU CẢ DỮ LIỆU GỐC ĐỂ TRA CỨU) ============ */
     const DEVICE_MODELS = {
       '22071212AG': 'Xiaomi 12T',
       '22081212UG': 'Xiaomi 12T Pro',
@@ -788,12 +788,15 @@
       'SM-A556E': 'Samsung Galaxy A55'
     };
 
-    function guessIPhoneModel() {
+    function getScreenSignature() {
       const w = Math.min(window.screen.width, window.screen.height);
       const h = Math.max(window.screen.width, window.screen.height);
       const dpr = window.devicePixelRatio || 1;
-      const res = `${w}x${h}@${dpr}`;
+      return `${w}x${h}@${dpr}`;
+    }
 
+    function guessIPhoneModel() {
+      const res = getScreenSignature();
       const iosMap = {
         '375x667@2': 'iPhone SE / 6s / 7 / 8',
         '414x736@3': 'iPhone 6s+ / 7+ / 8+',
@@ -812,8 +815,10 @@
 
     async function detectDeviceInfo() {
       const ua = navigator.userAgent || '';
+      const screenSig = getScreenSignature();
       let deviceName = 'Thiết bị không rõ';
       let browser = 'Trình duyệt khác';
+      let rawModel = '';
 
       // 1. NHẬN DIỆN THIẾT BỊ & HỆ ĐIỀU HÀNH
       if (/iPhone/i.test(ua)) {
@@ -834,6 +839,7 @@
             model = match[1].replace(/Build\/.*$/i, '').trim();
           }
         }
+        rawModel = model;
         if (model && model !== 'K') {
           deviceName = DEVICE_MODELS[model] ? `${DEVICE_MODELS[model]} (${model})` : `Android (${model})`;
         } else {
@@ -868,14 +874,24 @@
       else if (/Chrome/i.test(ua)) browser = 'Chrome';
       else if (/Safari/i.test(ua)) browser = 'Safari';
 
-      return `${deviceName} · ${browser}`;
+      return {
+        summary: `${deviceName} · ${browser}`,
+        rawUserAgent: ua,
+        rawModel: rawModel,
+        screen: screenSig,
+        platform: navigator.platform || ''
+      };
     }
 
     async function logAccess() {
       try {
         const info = await detectDeviceInfo();
         db.ref('logs').push({
-          device: info,
+          device: info.summary,
+          rawUserAgent: info.rawUserAgent,
+          rawModel: info.rawModel,
+          screen: info.screen,
+          platform: info.platform,
           timestamp: Date.now()
         });
       } catch (err) {
