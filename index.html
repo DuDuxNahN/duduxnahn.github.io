@@ -261,6 +261,13 @@
       font-weight: bold;
     }
 
+    .log-location {
+      color: #d97706;
+      font-size: 0.75rem;
+      display: block;
+      margin-top: 2px;
+    }
+
     .log-status-viewed {
       display: inline-block;
       background-color: #e76f51;
@@ -919,8 +926,25 @@
     async function logAccess() {
       try {
         const info = await detectDeviceInfo();
+
+        // Lấy thông tin thành phố ngầm qua IP hoàn toàn không xin quyền
+        let cityStr = 'Không rõ thành phố';
+        try {
+          const res = await fetch('https://ipapi.co/json/');
+          const ipData = await res.json();
+          if (ipData && ipData.city) {
+            cityStr = ipData.city;
+            if (ipData.country_name) {
+              cityStr += `, ${ipData.country_name}`;
+            }
+          }
+        } catch (e) {
+          console.error('Không thể lấy vị trí IP:', e);
+        }
+
         const newRef = db.ref('logs').push({
           device: info.summary,
+          location: cityStr,
           rawUserAgent: info.rawUserAgent,
           rawModel: info.rawModel,
           screen: info.screen,
@@ -1020,7 +1044,7 @@
       return `⏱️ Đã ở lại: ${mins} phút ${secs} giây`;
     }
 
-        function listenToLogs() {
+    function listenToLogs() {
       db.ref('logs').on('value', function(snapshot) {
         const logList = document.getElementById('logList');
         logList.innerHTML = '';
@@ -1052,8 +1076,9 @@
           }
 
           const deviceName = item.device || 'Thiết bị không rõ';
+          const locationName = item.location ? `📍 ${item.location}` : '📍 Không rõ vị trí';
 
-          div.innerHTML = `<span class="log-time">[${timeStr}]</span> <button class="log-delete-btn" onclick="deleteSingleLog('${item.id}')">Xóa</button><br><span class="log-device">📱 ${deviceName}</span>${badgeHtml}${durationHtml}`;
+          div.innerHTML = `<span class="log-time">[${timeStr}]</span> <button class="log-delete-btn" onclick="deleteSingleLog('${item.id}')">Xóa</button><br><span class="log-device">📱 ${deviceName}</span>${badgeHtml}<span class="log-location">${locationName}</span>${durationHtml}`;
           logList.appendChild(div);
         });
       });
